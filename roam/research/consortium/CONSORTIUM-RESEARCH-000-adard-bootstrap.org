@@ -1,0 +1,286 @@
+:PROPERTIES:
+:ID:       consortium-research-000-adard-bootstrap
+:END:
+#+title: CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research
+#+status: COMPLETE
+#+filetags: :consortium:adard:rlm:agents:research:harness:
+#+date: 2026-08-24
+
+* Research Question
+
+How should Consortium bootstrap an ADARD workflow that can later be invoked as a tool by a Prolog-RLM root while preserving independent reasoning phases, durable evidence, bounded cost, replay, and exact provenance?
+
+This record is research only. It does not authorize or implement a runtime.
+
+* Scope
+
+Included:
+
+- ADARD as an orchestration protocol rather than a single long model conversation
+- integration boundary with =lost-rob0t/prolog-rlm=
+- fresh-root phase isolation
+- durable research/design/review/decision artifacts
+- bounded context packets
+- independent adversarial review
+- deterministic promotion/decision gates
+- cancellation, budget and replay requirements
+- RAGE as a later escalation/repetition policy around ADARD
+
+Excluded from this first research record:
+
+- provider/model selection policy
+- OpenCode integration details
+- Emacs UI implementation
+- production credentials or secret handling
+- implementation of the Prolog runtime
+- automatic source-code merge authority
+
+* Repository Baseline
+
+At the start of this run =lost-rob0t/consortium= contained only =LICENSE=. There was no existing runtime or repository-local ADARD contract to preserve.
+
+The design therefore has freedom to establish a clean protocol boundary, but it should reuse proven semantics from Prolog-RLM and StarIntel Auto-Research rather than create a competing execution substrate.
+
+* Evidence Sources
+
+** Prolog-RLM
+
+- Repository: https://github.com/lost-rob0t/prolog-rlm
+- README: https://github.com/lost-rob0t/prolog-rlm/blob/main/README.md
+- Adaptive recursion: https://github.com/lost-rob0t/prolog-rlm/blob/main/research/RLM-RESEARCH-008-adaptive-recursion.org
+- Durable artifact context: https://github.com/lost-rob0t/prolog-rlm/blob/main/research/RLM-RESEARCH-009-durable-artifact-context.org
+
+Relevant established properties:
+
+1. Prolog owns execution semantics while models choose semantic strategy.
+2. Plans, recursion, tools, concurrency, time, token use and cost are bounded.
+3. Recursive depth is a safety ceiling, not a quality knob.
+4. Durable artifacts are immutable/versioned and carry provenance.
+5. Fresh reasoning roots can consume bounded artifact context without inheriting producer transcripts.
+6. Graph checkpoints carry artifact references rather than copied conversation history.
+7. Supervised agents, cancellation propagation and durable graph execution already exist as runtime concepts.
+
+** StarIntel Auto-Research
+
+- Repository: https://github.com/lost-rob0t/starintel-auto-research
+- Adaptive research index: https://github.com/lost-rob0t/starintel-auto-research/blob/main/roam/indexes/auto-research/STAR-RESEARCH-PIPELINE-INDEX-000-adaptive-research.org
+- Approved DAG/evaluation design: https://github.com/lost-rob0t/starintel-auto-research/blob/main/roam/design/auto-research/STAR-RESEARCH-PIPELINE-001-adaptive-research-dag-evaluation-harness.org
+
+Relevant established properties:
+
+1. Research candidates are isolated and bounded.
+2. Branches cannot directly write canonical knowledge.
+3. Candidate state is reconstructable from append-only events.
+4. Deterministic validation occurs before model-based review.
+5. Review roles are independent and raw reviews remain inspectable.
+6. A promotion gate is the only canonical writer.
+7. Rejected candidates remain retrievable.
+8. Runs may end unresolved rather than fabricate a winner.
+9. Context packets are explicitly bounded.
+10. Token/time/source/outcome metrics are first-class run data.
+
+** External RLM/Harness Research
+
+- Recursive Language Models: https://arxiv.org/abs/2512.24601
+- Language model harnesses are compositional generalizers: https://alexzhang13.github.io/blog/2026/harness/
+- Lambda-RLM: https://arxiv.org/abs/2603.20105
+- Chained Recursive Language Models: https://arxiv.org/abs/2608.05124
+
+Retrieved/rechecked 2026-08-24.
+
+Relevant external findings:
+
+- RLMs improve long-context handling by treating context as an external object which can be inspected and decomposed rather than repeatedly stuffing all context into one prompt.
+- Harness design can reduce complex out-of-distribution trajectories into smaller locally familiar model calls.
+- Typed/bounded execution is preferable to unrestricted model-generated control code when replay, verification and safety matter.
+- Fresh-root chained reasoning can share compact blackboards and durable artifacts while avoiding inheritance of the full prior conversational trajectory.
+
+* Findings
+
+** 1. ADARD should be a protocol, not a persona
+
+A prompt saying "act as researcher, then architect, then critic" is not sufficient phase separation. One model trajectory can anchor later stages on its own earlier reasoning and silently propagate mistakes.
+
+The durable unit should instead be a phase artifact with a declared schema, producer identity, inputs, evidence references, budget and immutable output snapshot.
+
+** 2. Every reasoning phase should be a fresh root by default
+
+The next phase receives:
+
+- the task/request
+- selected authoritative repository facts
+- selected evidence
+- explicitly promoted artifacts from prior phases
+- budget/capability policy
+
+It does not receive the previous model transcript or hidden reasoning.
+
+This makes research -> design -> review an actual multi-root process instead of role labels inside one conversation.
+
+** 3. Prolog-RLM should remain the execution substrate
+
+Consortium should not fork model-provider, recursion, tool, graph, budget, cancellation or artifact-store machinery already present in Prolog-RLM.
+
+Consortium should define higher-level workflow semantics and compile/execute them through stable Prolog-RLM graph/agent/tool interfaces.
+
+** 4. Research and design are different artifact classes
+
+Research records evidence, uncertainty, falsifiers, constraints and discovered facts.
+
+Design records decisions, alternatives, interfaces, invariants and acceptance criteria.
+
+A design may cite research. It must not rewrite research evidence to fit the selected architecture.
+
+** 5. Adversarial review must be independently rooted
+
+The reviewer should receive the immutable candidate design plus research/evidence packets, not the design model's transcript.
+
+The review should search for:
+
+- unsupported claims
+- hidden dependencies
+- contradictory prior decisions
+- capability escalation
+- unsafe write authority
+- stale evidence
+- budget/cancellation holes
+- replay ambiguity
+- context contamination
+- tests that cannot falsify the design
+
+** 6. Decision/promotion must be deterministic where possible
+
+Models can recommend outcomes. The gate should enforce mechanical vetoes itself.
+
+Examples:
+
+- unresolved evidence reference -> cannot promote
+- missing budget -> cannot execute
+- review snapshot does not match candidate hash -> cannot decide
+- design requires undeclared capability -> cannot promote
+- claimed test not actually executed -> veto
+
+A run may end =UNRESOLVED=.
+
+** 7. RAGE belongs outside the single ADARD run
+
+RAGE should not mean "repeat every phase after every failure".
+
+A local implementation/test defect should route to a bounded repair loop.
+
+A failure that falsifies an architectural assumption may create a new ADARD revision/run whose parent is the failed decision/design artifact.
+
+This prevents ordinary compiler/test failures from recursively triggering expensive full research cycles.
+
+** 8. Artifacts, not transcripts, are the durable memory
+
+Each phase should publish immutable artifacts and pass references forward.
+
+The canonical handoff packet should never contain a raw conversation transcript field.
+
+If a later phase needs additional detail, it retrieves a cited artifact or evidence item explicitly.
+
+** 9. Full async/cancellation semantics are required from the beginning
+
+An ADARD run can contain long provider/tool/research operations. The workflow must expose status events and cancellation, and root cancellation must propagate to all active children.
+
+No UI client should need to block waiting for completion.
+
+** 10. Model diversity is policy, not protocol
+
+The protocol should identify model/provider/parameters used by each phase and allow routing rules such as different models for design and adversarial review.
+
+It should not hard-code a specific commercial model into the core ADARD semantics.
+
+* Candidate Architecture Families
+
+** Candidate A: Transcript-Orchestrated ADARD
+
+One root model performs phases sequentially in one conversation and writes files at the end.
+
+Advantages:
+
+- trivial implementation
+- minimal provider calls
+
+Defects:
+
+- phase contamination
+- anchoring/self-review
+- poor replay semantics
+- transcript becomes accidental database
+- difficult independent provenance
+
+Assessment: reject.
+
+** Candidate B: Fresh-Root Artifact DAG over Prolog-RLM
+
+A deterministic ADARD graph launches isolated reasoning roots for research, design and adversarial review. Each publishes immutable artifacts. A deterministic decision gate consumes hashes/reviews/evidence and either promotes, requests bounded revision, or ends unresolved. Later realization/verification phases consume only promoted artifacts.
+
+Advantages:
+
+- directly reuses Prolog-RLM graph/agent/artifact/budget semantics
+- true phase isolation
+- replayable and observable
+- compatible with StarIntel Auto-Research conventions
+- supports model diversity without making models part of the protocol
+- natural place to attach RAGE as parent/child run policy
+
+Costs:
+
+- more provider calls
+- artifact schemas and state machine must be defined before implementation
+
+Assessment: preferred.
+
+** Candidate C: Independent External Agents + Filesystem Coordination
+
+Each phase is an external OpenCode/Claude/Codex-style agent communicating only through files and Git branches.
+
+Advantages:
+
+- strong process isolation
+- easy experimentation with heterogeneous agent systems
+
+Defects:
+
+- duplicates orchestration semantics
+- provider/tool state is harder to normalize
+- cancellation and budgets become framework-specific
+- replay becomes dependent on external-agent behavior
+- difficult to expose as one Prolog-RLM tool later
+
+Assessment: useful adapter target, reject as canonical core.
+
+* Research Conclusion
+
+Bootstrap Consortium around Candidate B: a fresh-root, artifact-mediated ADARD DAG that uses Prolog-RLM as the execution substrate.
+
+The first canonical contract should define phases and artifacts before implementing provider or UI adapters.
+
+Minimum phase sequence for the first protocol:
+
+#+begin_example
+REQUEST
+  -> RESEARCH
+  -> DESIGN
+  -> ADVERSARIAL_REVIEW
+  -> DECISION
+  -> READY_FOR_REALIZATION | REVISION_REQUESTED | UNRESOLVED | REJECTED
+#+end_example
+
+Realization and exact-head verification should be modeled as downstream executable phases once the research/design protocol is stable. RAGE should create bounded follow-up runs only when evidence or verification invalidates an architectural decision.
+
+* Falsifiers
+
+This recommendation should be reconsidered if any of the following are demonstrated:
+
+1. Prolog-RLM cannot provide isolated fresh roots while preserving global budgets/cancellation.
+2. Artifact-mediated handoff loses materially necessary information compared with transcript inheritance under fixed evaluation tasks.
+3. Independent review does not reduce defects enough to justify its added cost.
+4. Deterministic graph replay cannot reproduce control-plane state from the same event/artifact inputs.
+5. The protocol cannot represent an unresolved outcome without forcing a design selection.
+
+* Next Artifact
+
+[[file:../../design/consortium/CONSORTIUM-DESIGN-000-adard-artifact-dag.org][CONSORTIUM-DESIGN-000 ADARD Artifact DAG]]

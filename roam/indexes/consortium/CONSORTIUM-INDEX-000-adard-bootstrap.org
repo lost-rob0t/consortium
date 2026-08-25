@@ -1,0 +1,48 @@
+:PROPERTIES:
+:ID:       consortium-index-000-adard-bootstrap
+:END:
+#+title: CONSORTIUM-INDEX-000 First ADARD Bootstrap Run
+#+status: ACTIVE
+#+filetags: :consortium:index:adard:
+#+date: 2026-08-24
+
+* Purpose
+
+Index the first Consortium ADARD research/design run. This run establishes a promoted protocol design only; no executable implementation has been claimed.
+
+* Run Artifacts
+
+1. Research
+   - [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+2. Initial design
+   - [[file:../../design/consortium/CONSORTIUM-DESIGN-000-adard-artifact-dag.org][CONSORTIUM-DESIGN-000 ADARD Artifact DAG]]
+3. Adversarial review -- revision required
+   - [[file:../../reviews/consortium/CONSORTIUM-REVIEW-000-adard-artifact-dag.org][CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review]]
+4. Immutable design revision
+   - [[file:../../design/consortium/CONSORTIUM-DESIGN-001-adard-artifact-dag-revision.org][CONSORTIUM-DESIGN-001 ADARD Artifact DAG Revision]]
+5. Independent re-review -- accepted
+   - [[file:../../reviews/consortium/CONSORTIUM-REVIEW-001-adard-artifact-dag-revision.org][CONSORTIUM-REVIEW-001 ADARD Artifact DAG Revision Review]]
+6. Decision
+   - [[file:../../decisions/consortium/CONSORTIUM-DECISION-000-adard-bootstrap.org][CONSORTIUM-DECISION-000 ADARD Bootstrap]]
+
+* Outcome
+
+=READY_FOR_REALIZATION=
+
+Selected direction: fresh-root, artifact-mediated ADARD DAG over the Prolog-RLM execution substrate.
+
+The first design did not pass review. The run used its one bounded revision to separate runtime artifacts from canonical Org knowledge, type evidence manifests, and add asynchronous attempt fencing. The revised design then passed adversarial re-review.
+
+* Not Yet Implemented
+
+- Prolog ADARD modules
+- provider/model routing
+- OpenCode adapter
+- Emacs UI
+- realization/TDD phase
+- exact-head verification phase
+- RAGE recursion/escalation
+
+* Branch
+
+=adard/000-bootstrap-research=

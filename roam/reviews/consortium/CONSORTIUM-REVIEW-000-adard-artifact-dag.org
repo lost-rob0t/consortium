@@ -1,0 +1,182 @@
+:PROPERTIES:
+:ID:       consortium-review-000-adard-artifact-dag
+:END:
+#+title: CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review
+#+status: COMPLETE
+#+filetags: :consortium:adard:review:adversarial:architecture:
+#+date: 2026-08-24
+
+* Reviewed Artifacts
+
+- [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+- [[file:../../design/consortium/CONSORTIUM-DESIGN-000-adard-artifact-dag.org][CONSORTIUM-DESIGN-000 ADARD Artifact DAG]]
+
+This review treats the design as an immutable snapshot. It does not rely on the design author's transcript.
+
+* Review Method
+
+Attempt to falsify the proposed architecture across:
+
+- evidence support
+- architecture fit
+- hidden dependencies
+- security/capability boundaries
+- replay/idempotency
+- async/cancellation
+- stale-state handling
+- budget/cost controls
+- observability
+- falsifiability/testability
+- scope discipline
+
+* Strong Findings
+
+** 1. The core fresh-root/artifact boundary is well supported
+
+The proposed separation matches both existing Prolog-RLM durable-artifact semantics and the StarIntel Auto-Research promotion model. It directly addresses transcript growth, self-review anchoring and replay ambiguity.
+
+No veto.
+
+** 2. Consortium should not duplicate Prolog-RLM execution machinery
+
+The thin orchestration-layer decision is architecturally sound. Reimplementing providers, recursive execution, graph state, cancellation and artifact storage in Consortium would create two competing harness runtimes.
+
+No veto.
+
+* Adversarial Findings
+
+** A. Runtime artifacts and canonical Org knowledge are conflated
+
+Severity: HIGH
+
+The design says artifacts are immutable/versioned but does not clearly distinguish:
+
+1. machine runtime artifacts stored by Prolog-RLM; and
+2. human/canonical Org research/design/review/decision documents stored by Consortium.
+
+If these are treated as the same storage object, runtime checkpoints, transient attempts and rejected candidates can leak into canonical knowledge or Git can become an execution database.
+
+Required change:
+
+Define two layers explicitly:
+
+#+begin_example
+runtime artifact store
+    -> immutable machine records, traces, attempts, refs
+
+promotion gate
+    -> selected human-readable canonical Org artifact
+#+end_example
+
+Git/Org must not be the hot execution-state backend.
+
+Veto until fixed: YES.
+
+** B. EvidenceRef is underspecified
+
+Severity: HIGH
+
+A design hash can prove which design was reviewed, but the current contract cannot prove exactly what external or repository evidence supported it.
+
+Required change:
+
+Define a minimal evidence reference contract with source URI/path, retrieval time or repository revision where applicable, content hash when materialized, trust/provenance classification, and optional excerpt locator.
+
+The context-packet hash must bind the exact evidence manifest.
+
+Veto until fixed: YES.
+
+** C. Fresh-root API availability is assumed rather than proven
+
+Severity: MEDIUM
+
+The design maps fresh roots onto a generic Prolog-RLM chain/completion facade but does not identify a tested public API that guarantees no message-history inheritance.
+
+Required change:
+
+Treat this as an implementation precondition/spike rather than an assumed fact. The first implementation test must prove phase B sees only its declared context packet and cannot inspect phase A's provider message history.
+
+Veto: NO, but implementation may not proceed without the proof fixture.
+
+** D. Model independence and reasoning independence are different
+
+Severity: MEDIUM
+
+Fresh context creates trajectory independence, but using the same model/provider for design and review can still produce correlated failures.
+
+Required change:
+
+Keep provider/model diversity as policy, but define an optional =independence_class= or routing constraint so a run may require a different model family/provider for adversarial review when desired. Do not make heterogeneous models mandatory for the protocol.
+
+Veto: NO.
+
+** E. Async event ordering is insufficiently specified
+
+Severity: HIGH
+
+"Monotonic per run" is not enough under retries/replay/distributed workers. Late completion from generation N can race with cancellation or revision N+1.
+
+Required change:
+
+Each active phase attempt needs an immutable attempt ID plus generation/fencing token. State transitions accept events only from the currently authorized attempt. Duplicate stable event IDs are idempotent.
+
+Veto until fixed: YES.
+
+** F. RAGE cycle control is incomplete
+
+Severity: MEDIUM
+
+A child ADARD run can recursively create another child for effectively the same falsifier and consume unbounded budget even if each individual run is bounded.
+
+Required change:
+
+RAGE policy must fingerprint task + architectural assumption + falsifying evidence, track ancestry, reject unchanged cycles and enforce a whole-tree run/cost/depth budget.
+
+Veto: NO for ADARD bootstrap; mandatory before RAGE implementation.
+
+** G. Direct library dependency has an unresolved licensing/API-distribution boundary
+
+Severity: MEDIUM
+
+Consortium currently carries GPLv2. The inspected Prolog-RLM repository did not expose a root =LICENSE= through the repository contents API during this review. Regardless of common ownership, a distributable direct library dependency should not be assumed until licensing intent and public API compatibility are explicit.
+
+Required change:
+
+Record dependency licensing/API resolution as an implementation precondition. Until resolved, protocol design may target a process/tool/MCP boundary without copying source.
+
+Veto: NO for research/design; YES for publishing a directly linked implementation if unresolved.
+
+** H. Decision logic needs a distinction between deterministic veto and semantic tradeoff
+
+Severity: MEDIUM
+
+Mechanical gates are appropriate for malformed evidence, stale hashes and capability/budget failures. They cannot choose among all legitimate architecture tradeoffs.
+
+Required change:
+
+Split decision into:
+
+1. deterministic eligibility gate; then
+2. bounded semantic decision/recommendation root when multiple eligible choices remain.
+
+The final decision artifact records both.
+
+Veto: NO.
+
+* Recommendation
+
+=REVISE=
+
+The design direction is strong, but three defects are protocol-level and should be fixed before promotion:
+
+1. separate runtime artifacts from canonical Org knowledge;
+2. define evidence references/manifests;
+3. add attempt IDs + fencing semantics to async transitions.
+
+The remaining findings should become explicit implementation/policy preconditions.
+
+* Required Revision
+
+Create one immutable revised design artifact rather than editing the reviewed design snapshot:
+
+[[file:../../design/consortium/CONSORTIUM-DESIGN-001-adard-artifact-dag-revision.org][CONSORTIUM-DESIGN-001 ADARD Artifact DAG Revision]]

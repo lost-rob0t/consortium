@@ -1,0 +1,435 @@
+:PROPERTIES:
+:ID:       consortium-design-001-adard-artifact-dag-revision
+:END:
+#+title: CONSORTIUM-DESIGN-001 ADARD Artifact DAG Revision
+#+status: PROPOSED
+#+filetags: :consortium:adard:design:revision:rlm:artifacts:
+#+date: 2026-08-24
+
+* Parent Artifacts
+
+- [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+- [[file:CONSORTIUM-DESIGN-000-adard-artifact-dag.org][CONSORTIUM-DESIGN-000 ADARD Artifact DAG]]
+- [[file:../../reviews/consortium/CONSORTIUM-REVIEW-000-adard-artifact-dag.org][CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review]]
+
+This is the single bounded design revision permitted by the first ADARD run. The prior design remains immutable history.
+
+* Revision Summary
+
+This revision preserves the fresh-root artifact-DAG architecture and closes the three adversarial vetoes:
+
+1. runtime machine artifacts and canonical Org knowledge are now separate layers;
+2. evidence references and manifests are explicitly typed and hash-bound;
+3. asynchronous phase attempts now use attempt IDs and fencing generations.
+
+It also records non-veto review findings as implementation/policy preconditions.
+
+* Canonical Architecture
+
+#+begin_example
+                         task/request
+                              |
+                              v
+                    ADARD run supervisor
+                              |
+                    append-only run events
+                              |
+       +----------------------+----------------------+
+       |                      |                      |
+       v                      v                      v
+ fresh RESEARCH root     fresh DESIGN root    fresh REVIEW root
+       |                      |                      |
+       +----------- runtime artifacts --------------+
+                              |
+                              v
+                  deterministic eligibility gate
+                              |
+                    optional semantic decision
+                              |
+                              v
+                       promotion gate
+                              |
+             +----------------+----------------+
+             |                                 |
+             v                                 v
+   canonical Org knowledge              no promotion
+   research/design/review/              unresolved/rejected/
+   decision nodes                       revision exhausted
+#+end_example
+
+Prolog-RLM is the intended execution substrate. Consortium owns only the higher-level ADARD protocol, phase schemas, policy and promotion semantics.
+
+* Phase Sequence
+
+#+begin_example
+QUEUED
+  -> RESEARCHING
+  -> RESEARCH_COMPLETE
+  -> DESIGNING
+  -> DESIGN_COMPLETE
+  -> ADVERSARIAL_REVIEWING
+  -> REVIEW_COMPLETE
+  -> DECIDING
+  -> READY_FOR_REALIZATION
+     | UNRESOLVED
+     | REJECTED
+     | BLOCKED
+     | CANCELLED
+#+end_example
+
+The first run used one bounded revision. A runtime may represent that as:
+
+#+begin_example
+REVIEW_COMPLETE
+  -> REVISION_REQUESTED
+  -> DESIGNING
+  -> DESIGN_COMPLETE
+  -> ADVERSARIAL_REVIEWING
+  -> REVIEW_COMPLETE
+  -> DECIDING
+#+end_example
+
+Maximum in-run design revisions for protocol v0 is 1.
+
+* Two-Tier Artifact Model
+
+** Runtime artifacts
+
+Runtime artifacts are machine-oriented immutable records in the Prolog-RLM artifact store or a compatible backend.
+
+They include:
+
+- phase outputs
+- candidate attempts
+- evidence manifests
+- review records
+- usage/cost records
+- execution/test evidence
+- traces
+- checkpoints and artifact refs
+
+They are not canonical Org knowledge and need not be committed to Git.
+
+Conceptual form:
+
+#+begin_src prolog
+adard_runtime_artifact{
+    ref:Ref,
+    run_id:RunId,
+    attempt_id:AttemptId,
+    phase:Phase,
+    kind:Kind,
+    version:Version,
+    parents:Parents,
+    evidence_manifest:EvidenceManifestRef,
+    producer:Producer,
+    model:Model,
+    input_packet_hash:InputHash,
+    content_hash:ContentHash,
+    value:Value,
+    provenance:Provenance,
+    usage:Usage,
+    created_at:CreatedAt
+}.
+#+end_src
+
+The =value= contains results/conclusions, never hidden chain-of-thought.
+
+** Canonical Org knowledge
+
+Canonical Org files are promoted human-readable knowledge records.
+
+Only promotion authority may create them from eligible immutable runtime artifacts.
+
+Canonical classes initially include:
+
+- research
+- design
+- adversarial review
+- decision
+
+Git/Org is never the hot execution-state database.
+
+A canonical Org node records the runtime artifact refs/hashes from which it was promoted when a runtime implementation exists.
+
+* Evidence Reference Contract
+
+Every material evidence item must have a stable evidence reference.
+
+#+begin_src prolog
+adard_evidence_ref{
+    id:EvidenceId,
+    source:Source,
+    source_kind:SourceKind,
+    revision:Revision,
+    retrieved_at:RetrievedAt,
+    content_hash:ContentHash,
+    locator:Locator,
+    trust:Trust,
+    provenance:Provenance
+}.
+#+end_src
+
+Rules:
+
+- =source= is a URI, repository path/ref or durable local artifact identity;
+- =revision= is required where the source supports immutable revisions, such as Git;
+- =content_hash= is required when materialized content is used for a decision;
+- =locator= may identify lines, section, JSON pointer or equivalent bounded excerpt location;
+- =trust= distinguishes authoritative, primary, secondary, user-supplied and untrusted retrieved data;
+- absence of a field that a source cannot provide is explicit, never fabricated.
+
+An evidence manifest is itself immutable and hashable:
+
+#+begin_src prolog
+adard_evidence_manifest{
+    id:ManifestId,
+    refs:EvidenceRefs,
+    manifest_hash:ManifestHash
+}.
+#+end_src
+
+The phase context-packet hash binds the evidence manifest used by that phase.
+
+* Fresh-Root Context Contract
+
+Each model-authored phase receives only a deterministic bounded packet:
+
+#+begin_src prolog
+adard_context_packet{
+    run_id:RunId,
+    attempt_id:AttemptId,
+    phase:Phase,
+    task:Task,
+    authoritative_refs:AuthorityRefs,
+    artifact_refs:ArtifactRefs,
+    evidence_manifest:EvidenceManifestRef,
+    constraints:Constraints,
+    capabilities:Capabilities,
+    budget:PhaseBudget,
+    packet_hash:PacketHash
+}.
+#+end_src
+
+Forbidden packet fields include raw prior model =messages=, =transcript= or hidden reasoning.
+
+The first implementation must prove with instrumented model doubles that later phases cannot observe previous provider message history unless an explicit artifact contains the relevant public result.
+
+* Async Attempt and Fencing Contract
+
+Every execution of a phase has an immutable attempt identity and monotonically increasing generation/fencing value scoped to =(RunId, Phase)=.
+
+#+begin_src prolog
+adard_attempt{
+    id:AttemptId,
+    run_id:RunId,
+    phase:Phase,
+    generation:Generation,
+    state:State,
+    started_at:StartedAt,
+    finished_at:FinishedAt
+}.
+#+end_src
+
+Every completion/event that may advance run state carries:
+
+- stable event ID
+- run ID
+- phase
+- attempt ID
+- generation
+- expected previous state
+- payload/artifact refs
+
+Transition acceptance requires:
+
+1. event ID has not already been applied, or is treated idempotently if duplicated;
+2. attempt ID is the currently authorized attempt;
+3. generation equals the current fencing generation;
+4. expected previous state matches reconstructed run state;
+5. referenced artifacts exist and hashes match.
+
+Cancellation or replacement increments/revokes authority before stale work can commit a transition.
+
+Late output may remain as a non-promoted runtime artifact for debugging, but cannot advance canonical run state.
+
+* Research Contract
+
+Research produces an immutable result containing:
+
+- bounded question/scope
+- evidence manifest
+- findings
+- uncertainty and assumptions
+- contrary evidence
+- candidate architecture families where useful
+- falsifiers
+- recommendation or unresolved result
+
+Research may use bounded internal branching. Branch attempts cannot write canonical Org knowledge.
+
+* Design Contract
+
+Design consumes the promoted research artifact and authoritative constraints.
+
+It produces:
+
+- objective/scope
+- architecture and alternatives
+- interfaces/contracts
+- state machine
+- invariants
+- failure semantics
+- threat model when relevant
+- acceptance criteria
+- deferred work
+
+Design cannot mutate the research artifact.
+
+* Independent Adversarial Review Contract
+
+Review consumes exact immutable research/design/evidence refs.
+
+Required categories:
+
+- evidence support
+- architecture fit
+- hidden dependencies
+- capability/security boundary
+- replay/idempotency
+- async/cancellation/fencing
+- stale-state handling
+- budget/cost controls
+- observability
+- testability/falsifiability
+- scope discipline
+
+The review output is bound to =design_ref= and =design_hash=.
+
+Provider/model diversity is optional policy. The protocol defines an optional routing constraint:
+
+#+begin_src prolog
+independence_policy{
+    fresh_context:true,
+    different_model_family:PreferredOrRequired,
+    different_provider:PreferredOrRequired
+}.
+#+end_src
+
+Only =fresh_context=true= is mandatory for protocol v0.
+
+* Decision Contract
+
+Decision has two layers.
+
+** Deterministic eligibility gate
+
+Mechanical checks include:
+
+- artifact/ref/hash integrity
+- evidence resolution
+- stale/superseded state
+- capability declarations
+- bounded recursion/retries/concurrency
+- cancellation/fencing path
+- review binding to exact design
+- execution evidence for claimed tests
+- revision-budget compliance
+
+Any deterministic veto makes the candidate ineligible until a permitted revision resolves it.
+
+** Semantic decision
+
+When multiple eligible outcomes/architectures require judgment, an optional fresh decision root receives only eligible artifacts and bounded evidence.
+
+It returns a recommendation plus explicit tradeoffs.
+
+The deterministic supervisor then records the final decision artifact and transition. A semantic model cannot override a deterministic veto.
+
+* Budget Contract
+
+Budgets exist at both run and attempt scope.
+
+Required dimensions:
+
+- wall-clock time
+- input tokens
+- output/reasoning tokens when reported
+- model/provider calls
+- tool calls
+- monetary cost when reported or deterministically computable
+- concurrent roots
+- artifact bytes
+- revision count
+
+Child work consumes from the parent run budget; it does not receive a fresh unrelated budget.
+
+* RAGE Boundary
+
+RAGE is not implemented by this design.
+
+Required future constraints are already fixed:
+
+- a RAGE child ADARD run references the parent decision and falsifying evidence;
+- whole-tree run count, depth, token/cost and wall-time budgets apply;
+- task + architectural assumption + falsifier fingerprints detect unchanged cycles;
+- local deterministic defects route to repair rather than full ADARD recursion.
+
+* Prolog-RLM Dependency Boundary
+
+Target implementation mappings remain:
+
+| Consortium | Prolog-RLM |
+|------------+------------|
+| run/phase graph | =rlm_graph= |
+| supervised workers | =rlm_agent= |
+| runtime artifacts | artifact facade |
+| model/provider execution | =rlm_chain=/completion facade |
+| tool capabilities | typed capability/tool runtime |
+| budgets | existing budget accounting |
+| cancellation | graph/agent cancellation |
+| traces | =rlm_trace= |
+
+Implementation preconditions:
+
+1. prove the public API can create fresh roots without provider history inheritance;
+2. identify and pin the compatible public API surface rather than depending on internals;
+3. resolve licensing/distribution intent for any direct library linkage. Until then, process/tool/MCP-style integration is permitted as a design target without source copying.
+
+* Acceptance Criteria
+
+Protocol implementation is not complete until deterministic tests prove:
+
+1. independent fresh roots for Research, Design, Review and semantic Decision;
+2. no prior transcript fields in phase context packets;
+3. immutable runtime artifacts with exact parent/evidence refs;
+4. promotion is the only path from runtime artifacts to canonical Org files;
+5. Git/Org is not required for hot run-state mutation;
+6. evidence manifests are hash-bound to context packets;
+7. unresolved required evidence vetoes promotion;
+8. review is bound to the exact design hash;
+9. stale review cannot promote a revised design;
+10. stale/cancelled attempt completion fails its fencing check;
+11. duplicate events are idempotent;
+12. root cancellation prevents all active children from advancing state;
+13. an =accept= model recommendation cannot bypass a deterministic veto;
+14. =UNRESOLVED= is a successful terminal state;
+15. one bounded design revision preserves immutable prior artifacts;
+16. whole-run usage aggregates child usage without double-counting;
+17. RAGE cycle/budget tests exist before RAGE itself is enabled.
+
+* Deferred
+
+- concrete Prolog module names/APIs pending implementation spike
+- provider/model router defaults
+- model cost-quality benchmark corpus
+- OpenCode adapter
+- Emacs UI
+- realization/TDD phase
+- exact-head verification phase
+- RAGE executor
+- distributed worker transport
+
+* Re-Review Target
+
+[[file:../../reviews/consortium/CONSORTIUM-REVIEW-001-adard-artifact-dag-revision.org][CONSORTIUM-REVIEW-001 ADARD Artifact DAG Revision Review]]

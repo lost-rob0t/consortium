@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consortium.local/schema/adard-run.schema.json",
+  "title": "Consortium ADARD run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "goal",
+    "state",
+    "phase",
+    "budget",
+    "artifacts",
+    "lineage"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "goal": { "type": "string", "minLength": 1 },
+    "state": {
+      "enum": ["running", "blocked", "rejected", "complete"]
+    },
+    "phase": {
+      "enum": [
+        "analyze",
+        "design",
+        "adversarial_review",
+        "resolve",
+        "develop",
+        "verify"
+      ]
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_tokens", "output_tokens", "max_rage_cycles"],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 1 },
+        "output_tokens": { "type": "integer", "minimum": 1 },
+        "max_rage_cycles": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "id", "sha256"],
+        "properties": {
+          "kind": {
+            "enum": [
+              "analysis",
+              "design",
+              "adversarial_review",
+              "resolve_decision",
+              "implementation",
+              "verification"
+            ]
+          },
+          "id": { "type": "string", "minLength": 1 },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parent_run_id", "rage_cycle"],
+      "properties": {
+        "parent_run_id": { "type": ["string", "null"] },
+        "rage_cycle": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

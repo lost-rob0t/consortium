@@ -1,0 +1,419 @@
+:PROPERTIES:
+:ID:       consortium-design-000-adard-artifact-dag
+:END:
+#+title: CONSORTIUM-DESIGN-000 ADARD Artifact DAG
+#+status: PROPOSED
+#+filetags: :consortium:adard:design:rlm:dag:artifacts:
+#+date: 2026-08-24
+
+* Research Basis
+
+- [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+
+This design consumes the research artifact. It does not inherit the research model transcript.
+
+* Objective
+
+Define the first canonical Consortium ADARD control-plane contract as a fresh-root, artifact-mediated DAG that can later execute through Prolog-RLM without duplicating Prolog-RLM provider, graph, agent, budget, cancellation or artifact-store machinery.
+
+This file specifies protocol and invariants only. It does not authorize implementation.
+
+* Canonical Phase Names
+
+The repository uses explicit phase names instead of deriving semantics from the letters in the ADARD label:
+
+1. =RESEARCH=
+2. =DESIGN=
+3. =ADVERSARIAL_REVIEW=
+4. =DECISION=
+
+Downstream executable work, once separately designed, may add:
+
+5. =REALIZATION=
+6. =VERIFICATION=
+
+RAGE is a higher-level rerun/escalation policy, not an additional phase hidden inside one ADARD run.
+
+* Core Invariants
+
+1. Every model-authored phase begins from a fresh reasoning root by default.
+2. No phase receives a previous phase's raw model transcript or hidden reasoning.
+3. Cross-phase knowledge moves through immutable, versioned artifacts and bounded evidence references.
+4. Each artifact records producer, provider/model identity, run, phase, parent artifacts, evidence refs, budget usage and content hash.
+5. The orchestration state machine is owned by deterministic runtime code.
+6. Models may recommend transitions but cannot directly mutate canonical run state.
+7. Adversarial review is independent from the design root.
+8. A decision is bound to exact immutable research/design/review hashes.
+9. Deterministic vetoes override model scores/recommendations.
+10. A run may terminate unresolved.
+11. Capability grants are explicit and phase-scoped.
+12. Budgets apply to the whole run and to each child phase.
+13. Root cancellation propagates to active child calls/tools/agents.
+14. Stale artifacts are detected; supersession is explicit rather than silent.
+15. Canonical writes occur only through declared promotion/decision authority.
+
+* State Machine
+
+#+begin_example
+QUEUED
+  -> RESEARCHING
+  -> RESEARCH_COMPLETE
+  -> DESIGNING
+  -> DESIGN_COMPLETE
+  -> ADVERSARIAL_REVIEWING
+  -> REVIEW_COMPLETE
+  -> DECIDING
+  -> READY_FOR_REALIZATION
+     | REVISION_REQUESTED
+     | UNRESOLVED
+     | REJECTED
+     | BLOCKED
+     | CANCELLED
+#+end_example
+
+Allowed bounded revision:
+
+#+begin_example
+REVISION_REQUESTED
+  -> DESIGNING
+#+end_example
+
+The initial protocol permits at most one design revision inside one run. Additional architectural iteration creates a child ADARD run linked to the prior decision.
+
+* Run Contract
+
+Conceptual Prolog representation:
+
+#+begin_src prolog
+adard_run{
+    id:RunId,
+    task:TaskRef,
+    state:State,
+    parent_run:ParentRun,
+    budget:Budget,
+    capabilities:Capabilities,
+    phase_artifacts:PhaseArtifacts,
+    active_work:ActiveWork,
+    created_at:CreatedAt,
+    updated_at:UpdatedAt,
+    stop_reason:StopReason
+}.
+#+end_src
+
+Required run budget dimensions:
+
+- wall time
+- input tokens
+- output/reasoning tokens when provider reports them
+- monetary cost when provider reports it or pricing can be deterministically calculated
+- provider/model calls
+- tool calls
+- concurrent roots
+- artifact bytes
+- revision count
+
+* Phase Artifact Contract
+
+#+begin_src prolog
+adard_artifact{
+    ref:Ref,
+    run_id:RunId,
+    phase:Phase,
+    kind:Kind,
+    version:Version,
+    parents:ParentRefs,
+    evidence:EvidenceRefs,
+    producer:Producer,
+    model:ModelDescriptor,
+    input_packet_hash:InputHash,
+    content_hash:ContentHash,
+    value:Value,
+    provenance:Provenance,
+    usage:Usage,
+    created_at:CreatedAt
+}.
+#+end_src
+
+The artifact =value= contains conclusions/results, never chain-of-thought.
+
+* Bounded Context Packet
+
+Every model root receives a deterministic packet assembled from declared inputs:
+
+#+begin_src prolog
+adard_context_packet{
+    run_id:RunId,
+    phase:Phase,
+    task:Task,
+    authoritative_refs:AuthorityRefs,
+    artifact_refs:ArtifactRefs,
+    evidence_refs:EvidenceRefs,
+    constraints:Constraints,
+    capabilities:Capabilities,
+    budget:PhaseBudget,
+    packet_hash:PacketHash
+}.
+#+end_src
+
+Rules:
+
+- exact refs are preferred to open-ended history retrieval
+- every included artifact/evidence item is recorded in the packet manifest
+- hard max-items and max-bytes/tokens ceilings apply
+- raw prior phase transcripts are forbidden fields
+- untrusted retrieved text is labeled as data, never promoted into system instructions
+
+* Research Phase
+
+Inputs:
+
+- task/request
+- declared repository/source scope
+- existing approved decisions and relevant rejected alternatives
+- research budget/capabilities
+
+Outputs:
+
+- research question
+- evidence inventory
+- findings
+- uncertainty/assumptions
+- candidate architecture families when relevant
+- contrary evidence
+- falsifiers
+- recommended design direction or =UNRESOLVED=
+
+Research may branch internally under a bounded research adapter, but only one immutable promoted research artifact enters the next phase.
+
+* Design Phase
+
+Inputs:
+
+- task/request
+- promoted research artifact
+- authoritative architecture constraints
+
+Outputs:
+
+- objective/scope
+- candidate or selected architecture
+- interfaces/contracts
+- state machine
+- invariants
+- failure semantics
+- acceptance criteria
+- explicit deferred work
+
+The design root may not alter research evidence.
+
+* Adversarial Review Phase
+
+The reviewer receives the immutable research and design snapshots plus evidence references.
+
+It does not receive the design model's transcript.
+
+Required review categories:
+
+- evidence support
+- architecture fit
+- hidden dependencies
+- security/capability boundary
+- replay/idempotency
+- async/cancellation correctness
+- stale-state handling
+- budget/cost failure modes
+- observability
+- falsifiability/testability
+- scope creep
+
+Required review output:
+
+#+begin_src prolog
+adard_review{
+    design_ref:DesignRef,
+    design_hash:DesignHash,
+    findings:Findings,
+    vetoes:Vetoes,
+    required_changes:RequiredChanges,
+    recommendation:Recommendation
+}.
+#+end_src
+
+Recommendation is one of =accept=, =revise=, =reject= or =unresolved=.
+
+* Decision Gate
+
+Inputs are exact refs/hashes for the research, design and review artifacts.
+
+Deterministic vetoes include:
+
+- missing/unresolvable evidence required by a central claim
+- review hash mismatch
+- undeclared capability requirement
+- unbounded recursion/retry/concurrency
+- missing root cancellation path
+- canonical write authority granted to ordinary phase agents
+- transcript inheritance across supposedly independent phases
+- claimed verification/test result without execution evidence
+- decision based on stale superseded artifact without explicit resolution
+
+Gate result:
+
+#+begin_src prolog
+adard_decision{
+    outcome:Outcome,
+    research_ref:ResearchRef,
+    design_ref:DesignRef,
+    review_ref:ReviewRef,
+    vetoes:Vetoes,
+    conditions:Conditions,
+    rationale:Rationale,
+    decided_at:DecidedAt
+}.
+#+end_src
+
+=Outcome= is =ready_for_realization=, =revision_requested=, =unresolved= or =rejected=.
+
+* Prolog-RLM Integration Boundary
+
+Consortium should depend on public Prolog-RLM capabilities rather than copy them.
+
+Expected mappings:
+
+| Consortium concept | Prolog-RLM substrate |
+|--------------------+----------------------|
+| ADARD state machine | =rlm_graph= |
+| fresh model root | =rlm_chain=/completion facade |
+| supervised phase worker | =rlm_agent= |
+| durable phase artifact | =rlm_artifact= facade |
+| bounded context packet | artifact/context operations |
+| capability enforcement | typed-plan/tool capability checks |
+| run/global budget | existing budget accounting |
+| cancellation | graph/agent cancellation propagation |
+| provider/model routing | =rlm_chain= configuration/policy |
+| trace export | =rlm_trace= |
+
+The first Consortium implementation should be a thin higher-level workflow layer.
+
+* Async Contract
+
+Every externally dependent phase operation is asynchronous from a client/UI perspective.
+
+Events should include at minimum:
+
+#+begin_example
+run_started
+phase_started
+artifact_published
+phase_completed
+review_vetoed
+revision_requested
+decision_recorded
+run_blocked
+run_cancelled
+run_completed
+#+end_example
+
+Event order is monotonic per run. Consumers must tolerate replay/duplicate delivery through stable event IDs.
+
+Cancellation rules:
+
+- cancel run -> cancel active phase -> cancel active model/tool/subagent work
+- completed immutable artifacts remain available after cancellation
+- no callback/result from cancelled stale work may advance the run
+
+* RAGE Integration Boundary
+
+RAGE wraps ADARD runs as a bounded policy.
+
+RAGE may create a child ADARD run when:
+
+- verification falsifies an architectural assumption
+- new evidence contradicts the promoted research basis
+- realization exposes a missing architecture dependency
+- the decision explicitly requests a new research question
+
+RAGE should not create a new full ADARD run for:
+
+- formatting errors
+- local compiler errors with understood causes
+- deterministic test defects that do not falsify design
+- transient provider/network failure handled by bounded retry
+
+Each child run records its parent decision and the exact falsifying evidence.
+
+* Security and Integrity Threat Model
+
+** Cross-phase prompt contamination
+
+Threat: research evidence contains instructions or one phase tries to steer later system policy.
+
+Control: evidence is typed/quoted data; phase prompts/system policy are constructed by deterministic runtime code.
+
+** Self-review anchoring
+
+Threat: reviewer inherits designer reasoning and merely confirms it.
+
+Control: fresh review root; only immutable artifacts/evidence are passed.
+
+** Artifact substitution
+
+Threat: decision reviews one design but promotes another.
+
+Control: hashes/refs bind review and decision to exact snapshots.
+
+** Stale-state overwrite
+
+Threat: late completion from cancelled/replaced work advances state.
+
+Control: run generation/state transition validation and immutable artifact refs.
+
+** Budget runaway
+
+Threat: recursive research or RAGE cycles consume unlimited tokens/cost.
+
+Control: phase + global budgets, max revision count, parent/child run limits and explicit escalation policy.
+
+** Capability escalation
+
+Threat: model output requests tools/writes not authorized for the phase.
+
+Control: Prolog-RLM capability validation before execution; child capability sets narrow by default.
+
+** False verification
+
+Threat: model claims tests/evidence succeeded without execution.
+
+Control: execution evidence is a separate typed artifact; deterministic gate refuses unsupported success claims.
+
+* Initial Acceptance Criteria
+
+Before this design may be considered implemented:
+
+1. one deterministic fixture executes Research -> Design -> Adversarial Review -> Decision with fresh roots represented by independent model doubles;
+2. no phase packet contains transcript/message history from a prior phase;
+3. phase artifacts are immutable and hash-bound;
+4. review is bound to the exact design hash;
+5. an injected stale review cannot promote a newer design;
+6. deterministic veto overrides an =accept= recommendation;
+7. =UNRESOLVED= completes cleanly without a fabricated winner;
+8. root cancellation prevents late child completion from advancing state;
+9. run state can be replayed from durable state/artifact references;
+10. whole-run token/call/cost budgets cap all children;
+11. one bounded revision is possible without losing prior immutable design/review records;
+12. RAGE escalation is not triggered by a local deterministic implementation failure fixture.
+
+* Deferred
+
+- exact provider/model router
+- OpenCode adapter
+- Emacs frontend
+- realization/TDD protocol
+- exact-head verification protocol
+- automatic RAGE scheduling
+- distributed workers
+- model-performance/cost benchmark corpus
+
+* Review Target
+
+[[file:../../reviews/consortium/CONSORTIUM-REVIEW-000-adard-artifact-dag.org][CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review]]

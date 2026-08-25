@@ -1,0 +1,27 @@
+[project]
+name = "consortium"
+slug = "consortium"
+
+[control_plane]
+runtime = "prolog-rlm"
+workflow = "adard"
+fresh_context_per_phase = true
+hidden_transcript_transfer = false
+
+[adard]
+phases = ["analyze", "design", "adversarial_review", "resolve", "develop", "verify"]
+require_analysis_before_design = true
+require_review_before_resolve = true
+require_approval_before_develop = true
+require_exact_head_verification = true
+
+[budgets]
+max_revisions_per_phase = 1
+max_rage_cycles = 3
+require_explicit_token_budget = true
+require_explicit_stop_condition = true
+
+[rage]
+enabled = true
+mode = "tool"
+auto_escalate_local_failures = false

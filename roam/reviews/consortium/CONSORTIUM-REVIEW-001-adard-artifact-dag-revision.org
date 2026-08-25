@@ -1,0 +1,93 @@
+:PROPERTIES:
+:ID:       consortium-review-001-adard-artifact-dag-revision
+:END:
+#+title: CONSORTIUM-REVIEW-001 ADARD Artifact DAG Revision Review
+#+status: COMPLETE
+#+filetags: :consortium:adard:review:adversarial:revision:
+#+date: 2026-08-24
+
+* Reviewed Artifacts
+
+- [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+- [[file:../../design/consortium/CONSORTIUM-DESIGN-001-adard-artifact-dag-revision.org][CONSORTIUM-DESIGN-001 ADARD Artifact DAG Revision]]
+- Parent review: [[file:CONSORTIUM-REVIEW-000-adard-artifact-dag.org][CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review]]
+
+* Veto Recheck
+
+** Runtime artifacts vs canonical Org knowledge
+
+Resolved.
+
+The revision now explicitly separates machine-oriented runtime artifacts from promotion-gated canonical Org knowledge and forbids treating Git/Org as hot execution state.
+
+Veto: CLEARED.
+
+** Evidence reference integrity
+
+Resolved.
+
+The revision defines a typed evidence reference and immutable evidence manifest, and binds the selected evidence manifest into each phase context-packet hash.
+
+Veto: CLEARED.
+
+** Async race/fencing semantics
+
+Resolved.
+
+The revision adds immutable phase attempt IDs, monotonically increasing fencing generations, expected-state checks and idempotent event IDs. Late or cancelled attempts cannot advance run state.
+
+Veto: CLEARED.
+
+* Remaining Non-Veto Risks
+
+** Prolog-RLM fresh-root API proof
+
+Still open as an implementation precondition. The design correctly stopped assuming a specific internal API and requires an instrumented proof fixture before implementation is accepted.
+
+** Direct dependency licensing/public API
+
+Still open as an implementation/distribution precondition. This does not invalidate the protocol design.
+
+** Semantic decision reproducibility
+
+A semantic decision root can be nondeterministic even when eligibility is deterministic. This is acceptable if the exact input packet, model descriptor, returned recommendation and final supervisor decision are all recorded. Re-execution need not reproduce identical model prose; control-plane replay must reproduce the recorded state transition from the recorded decision artifact.
+
+** Provider-correlated review failures
+
+Fresh context does not guarantee different failure modes. The optional independence policy is the correct protocol boundary; benchmark data should later determine whether heterogeneous reviewer routing is worth its cost.
+
+** Evidence hash practicality
+
+Some dynamic/web evidence may not offer a native immutable revision. The contract correctly permits explicit absence rather than fabrication, but implementation must hash materialized evidence actually used by a decision where possible.
+
+* Architecture Challenge
+
+Could a simpler transcript-based implementation provide enough value for the first version?
+
+No. Transcript inheritance defeats the primary property being bootstrapped: independently rooted research/design/review with inspectable artifact handoff. It would make later migration to a real artifact DAG harder because phase boundaries and provenance would not be trustworthy.
+
+Could Consortium simply reuse StarIntel Auto-Research unchanged?
+
+No. Auto-Research is a domain/project knowledge pipeline with its own Org promotion rules. Consortium needs a general protocol that can use Prolog-RLM as its execution substrate and later expose ADARD as a tool to other agents. Reusing its invariants is correct; importing it as the runtime is not.
+
+Could Consortium place ADARD directly inside Prolog-RLM?
+
+Not initially. Prolog-RLM is a general harness/runtime. Keeping ADARD as a separate higher-level protocol prevents one workflow from becoming core runtime policy while still allowing tight integration through public graph/agent/artifact interfaces.
+
+* Recommendation
+
+=ACCEPT=
+
+No deterministic design veto remains.
+
+Conditions before realization begins:
+
+1. prove fresh-root provider-history isolation using an instrumented deterministic fixture;
+2. identify the stable Prolog-RLM public integration surface;
+3. resolve direct-link licensing/distribution intent or use a process/tool boundary;
+4. preserve all protocol acceptance tests from DESIGN-001;
+5. do not implement RAGE until whole-tree fingerprint/cycle/budget controls have deterministic tests.
+
+* Decision Target
+
+[[file:../../decisions/consortium/CONSORTIUM-DECISION-000-adard-bootstrap.org][CONSORTIUM-DECISION-000 ADARD Bootstrap]]

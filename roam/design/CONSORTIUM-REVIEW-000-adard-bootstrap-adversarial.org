@@ -1,0 +1,72 @@
+#+title: CONSORTIUM-REVIEW-000 ADARD Bootstrap Adversarial Review
+#+description: Independent adversarial review of the first Consortium ADARD control-plane design.
+#+status: COMPLETE
+#+filetags: :consortium:review:adversarial:adard:
+
+* Reviewed artifact
+
+- [[file:CONSORTIUM-DESIGN-000-adard-control-plane.org][CONSORTIUM-DESIGN-000 ADARD Control Plane]]
+
+* Material attacks
+
+** The phase list could become ceremony
+
+Risk: workers may emit prose artifacts while the actual runtime ignores prerequisites.
+
+Required mitigation: transition legality and prerequisites must be executable Prolog/runtime rules, not documentation-only conventions. The bootstrap adds deterministic state facts, but the next runtime slice must make admission depend on them.
+
+** Fresh context is not enough by itself
+
+Risk: a provider adapter could accidentally reuse a session/thread identifier or inject a previous transcript into the new phase packet.
+
+Required mitigation: future provider adapters must record a fresh-context/session identity and tests must prove no hidden transcript is forwarded. Packet contents need inspectable provenance.
+
+** Artifact hashes without immutable storage are weak
+
+Risk: the run schema can name a SHA-256 while an implementation stores mutable content elsewhere.
+
+Required mitigation: persistence design must define content-addressed or append-only artifact semantics and verify hashes on read.
+
+** Failure classification may be gamed by the implementing model
+
+Risk: an implementation worker could label an architectural defect as a local bug to avoid adversarial redesign.
+
+Required mitigation: the verifier/gate, not the implementation worker, owns terminal failure classification used for routing.
+
+** RAGE recursion can still explode
+
+Risk: =max_rage_cycles= alone does not limit tokens/effects inside a cycle.
+
+Required mitigation: every RAGE invocation must receive nested token/time/tool/effect budgets that narrow from the parent run.
+
+** Resolve is a high-authority phase
+
+Risk: a language model adjudicator could effectively grant execution authority from prose.
+
+Required mitigation: resolve output is a proposal consumed by deterministic policy. Development admission additionally requires runtime authority/capability checks.
+
+** Exact-head identity needs a concrete domain
+
+Risk: commit SHA is insufficient for non-Git artifacts, dirty worktrees, generated outputs, or deployment verification.
+
+Required mitigation: use an implementation identity abstraction capable of commit/tree/artifact hashes plus declared dirty-state policy rather than hard-coding Git SHA semantics into core.
+
+* Verdict
+
+APPROVE the contract-first bootstrap with follow-up requirements.
+
+The design is appropriately narrow for an empty repository and correctly keeps provider/runtime integration out of the first slice. The highest-priority next work is executable admission/gate tests and a provider-neutral fresh-context worker adapter contract. Do not add autonomous RAGE recursion before those are tested.
+
+* Required follow-up
+
+1. Make transition/prerequisite admission executable and test it under SWI-Prolog.
+2. Define immutable artifact storage/read verification.
+3. Define provider-neutral worker/session identity and packet provenance.
+4. Define verifier-owned failure classification.
+5. Add nested budget narrowing for RAGE/subagents.
+
+* Changelog
+
+| Date | Change |
+|------+--------|
+| 2026-08-24 | First adversarial review of Consortium bootstrap design. |

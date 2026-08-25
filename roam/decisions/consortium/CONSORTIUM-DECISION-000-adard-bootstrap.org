@@ -1,0 +1,81 @@
+:PROPERTIES:
+:ID:       consortium-decision-000-adard-bootstrap
+:END:
+#+title: CONSORTIUM-DECISION-000 ADARD Bootstrap
+#+status: DECIDED
+#+filetags: :consortium:adard:decision:bootstrap:
+#+date: 2026-08-24
+
+* Decision Inputs
+
+- Research: [[file:../../research/consortium/CONSORTIUM-RESEARCH-000-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 ADARD Bootstrap Research]]
+- Rejected initial design snapshot: [[file:../../design/consortium/CONSORTIUM-DESIGN-000-adard-artifact-dag.org][CONSORTIUM-DESIGN-000 ADARD Artifact DAG]]
+- Initial adversarial review: [[file:../../reviews/consortium/CONSORTIUM-REVIEW-000-adard-artifact-dag.org][CONSORTIUM-REVIEW-000 ADARD Artifact DAG Adversarial Review]]
+- Revised design: [[file:../../design/consortium/CONSORTIUM-DESIGN-001-adard-artifact-dag-revision.org][CONSORTIUM-DESIGN-001 ADARD Artifact DAG Revision]]
+- Revised-design review: [[file:../../reviews/consortium/CONSORTIUM-REVIEW-001-adard-artifact-dag-revision.org][CONSORTIUM-REVIEW-001 ADARD Artifact DAG Revision Review]]
+
+Manual bootstrap snapshot after independent re-review: Git commit =2be55bd3683843bd4951de53945e838f74b41a60= on branch =adard/000-bootstrap-research=.
+
+* Eligibility Gate
+
+| Gate | Result |
+|------+--------|
+| Research basis exists | PASS |
+| Competing architecture families considered | PASS |
+| Initial design independently adversarially reviewed | PASS |
+| Initial deterministic vetoes resolved by immutable revision | PASS |
+| Revised design independently re-reviewed | PASS |
+| Runtime/canonical artifact layers separated | PASS |
+| Evidence-manifest integrity specified | PASS |
+| Async attempt fencing specified | PASS |
+| Unbounded recursion/retry prohibited | PASS |
+| Cancellation propagation required | PASS |
+| Unresolved terminal outcome supported | PASS |
+| Implementation evidence claimed | N/A -- implementation has not started |
+
+No deterministic design veto remains.
+
+* Decision
+
+=READY_FOR_REALIZATION=
+
+Promote the architecture in =CONSORTIUM-DESIGN-001= as the design basis for the first Consortium implementation.
+
+The selected architecture is:
+
+#+begin_example
+fresh-root ADARD artifact DAG
+  + Prolog-RLM execution substrate
+  + immutable runtime artifacts
+  + bounded evidence/context manifests
+  + independent adversarial review
+  + deterministic eligibility/promotion gates
+  + attempt fencing and cancellation
+  + canonical Org promotion separate from hot runtime state
+#+end_example
+
+The transcript-orchestrated architecture is rejected.
+
+An external-agent/filesystem architecture is not canonical, but may later be implemented as an adapter capable of satisfying the same ADARD protocol.
+
+* Conditions Before Implementation Is Accepted
+
+1. Prove actual fresh-root/provider-history isolation with an instrumented deterministic test.
+2. Use a stable/public Prolog-RLM integration surface rather than internal predicates.
+3. Resolve direct-link licensing/distribution intent for Prolog-RLM, or use a process/tool boundary until resolved.
+4. Implement the DESIGN-001 acceptance criteria TDD-first.
+5. Keep client-visible operations asynchronous and cancellation-safe.
+6. Do not enable RAGE until whole-tree cycle/fingerprint/budget controls have deterministic tests.
+7. Do not claim realization/verification success from this research run; no implementation tests were executed.
+
+* RAGE Decision
+
+RAGE is explicitly deferred.
+
+The first implementation target is one ADARD run only. RAGE will later compose ADARD runs under a separate bounded escalation policy.
+
+* Next Run
+
+The next ADARD run should research and design the executable bootstrap against the current Prolog-RLM public interfaces, then realize it TDD-first only after that run passes adversarial review and decision.
+
+This decision does not authorize silent changes to Prolog-RLM itself.

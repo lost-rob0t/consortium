@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install SWI-Prolog
         run: |
@@ -35,4 +37,6 @@ jobs:
           PY
 
       - name: Reject whitespace errors
-        run: git diff --check HEAD^
+        run: |
+          base="$(git merge-base HEAD origin/main)"
+          git diff --check "$base" HEAD

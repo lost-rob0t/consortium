@@ -1,0 +1,79 @@
+#+title: CONSORTIUM-RESEARCH-000 First ADARD Bootstrap
+#+description: Establish the minimum durable architecture required to bootstrap Consortium around Prolog-RLM, isolated model workers, and gated ADARD/RAGE execution.
+#+status: COMPLETE
+#+filetags: :consortium:research:adard:prolog-rlm:agents:
+
+* Question
+
+What is the smallest architecture that lets Consortium execute ADARD with independent language-model workers while preserving durable shared reasoning state and making RAGE an explicit escalation tool?
+
+* Observed repository state
+
+- The repository initially contained only =LICENSE=.
+- The license is GNU GPL version 2.
+- There was no prior runtime, workflow, provider, persistence, model-routing, or UI contract to preserve.
+
+* Existing architecture used as evidence
+
+- =prolog-rlm= already defines the reusable SWI-Prolog RLM/agent runtime boundary: Prolog owns execution semantics, validation, budgets, authority, persistence, cancellation, tracing, and effect accounting.
+- The existing RAGE template defines Recursive Analysis with Gated Execution and durable research/design/implementation artifacts.
+- StarIntel Auto-Research demonstrates bounded candidates, durable artifacts, independent reviewers, promotion gates, and bounded memory packets instead of replaying entire model transcripts.
+
+* Requirements established by the operator discussion
+
+1. ADARD phases must be executed by different/fresh model contexts rather than one shared conversation.
+2. Durable knowledge survives between phases through Prolog facts and explicit artifacts.
+3. Prolog-RLM is the orchestration/execution substrate rather than duplicating an unrestricted tool runtime.
+4. RAGE is callable as a heavyweight escalation workflow/tool.
+5. Local implementation failures must not automatically trigger another architecture loop.
+6. Development is TDD-first.
+7. Final verification is independent and binds to the exact implementation identity.
+8. Future Emacs/OpenCode frontends must be able to observe/cancel work asynchronously without becoming workflow authority.
+
+* Threat model / adversarial concerns
+
+** Hidden context bleed
+
+If phase B inherits phase A's conversation, nominally independent review becomes correlated self-review. Mitigation: fresh provider/model context for every model-bearing phase and explicit immutable packets only.
+
+** Prose as authority
+
+If a model can declare itself approved or request arbitrary tools, gates are cosmetic. Mitigation: deterministic Prolog-owned transition and capability checks.
+
+** Recursive token explosion
+
+If every failure restarts ADARD/RAGE and prior transcripts are replayed, cost grows without bound. Mitigation: failure classification, bounded revision counts, explicit RAGE budget and stop conditions, artifact retrieval instead of transcript replay.
+
+** Stale verification
+
+A verifier can accidentally validate a different tree than the implementation being promoted. Mitigation: verification artifact must bind to an exact commit/tree/artifact identity.
+
+** Provider coupling
+
+Encoding provider/model APIs in the workflow core would make ADARD semantics depend on OpenCode or one vendor. Mitigation: keep providers and transports behind adapters; the first bootstrap defines workflow contracts only.
+
+* Conclusion
+
+Bootstrap Consortium as a contract-first Prolog control plane. Define deterministic ADARD phase/transition semantics, a durable run/artifact schema, context-isolation invariants, and explicit RAGE escalation policy. Defer provider adapters, OpenCode integration, persistent store choice, and autonomous RAGE execution until the control-plane contract is reviewed and testable.
+
+* Rejected alternatives
+
+- One long shared model conversation: rejected because review independence and context cost are poor.
+- RAGE as the default outer loop: rejected because ordinary implementation defects should use bounded repair rather than architectural recursion.
+- Provider-specific workflow engine first: rejected because it would conflate orchestration semantics with transport/model selection.
+- Copying the entire RAGE repository template: rejected because Consortium should consume RAGE concepts/tools without inheriting unrelated project-template machinery.
+
+* Falsifiers
+
+The design should be revisited if:
+
+- Prolog-RLM cannot expose the required isolated child/model execution primitive without violating its core authority model;
+- a fresh-context phase cannot reconstruct sufficient context from bounded artifacts/facts;
+- exact-head verification cannot be represented independently of a provider session;
+- measured artifact retrieval costs approach or exceed full-transcript replay for normal tasks.
+
+* Changelog
+
+| Date | Change |
+|------+--------|
+| 2026-08-24 | Initial analysis for the first Consortium ADARD bootstrap. |

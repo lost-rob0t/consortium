@@ -1,0 +1,43 @@
+#+title: CONSORTIUM-RESOLVE-000 First ADARD Bootstrap Decision
+#+description: Resolve the first Consortium ADARD design and adversarial review into an explicit bounded implementation decision.
+#+status: APPROVED
+#+filetags: :consortium:resolve:decision:adard:
+
+* Inputs
+
+- [[file:../research/CONSORTIUM-RESEARCH-000-first-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 First ADARD Bootstrap]]
+- [[file:CONSORTIUM-DESIGN-000-adard-control-plane.org][CONSORTIUM-DESIGN-000 ADARD Control Plane]]
+- [[file:CONSORTIUM-REVIEW-000-adard-bootstrap-adversarial.org][CONSORTIUM-REVIEW-000 ADARD Bootstrap Adversarial Review]]
+
+* Decision
+
+APPROVE the contract-first bootstrap only.
+
+The approved implementation slice is limited to:
+
+- repository mission and agent contracts;
+- deterministic ADARD phase/failure-routing facts;
+- a durable run/artifact schema;
+- fresh-context and authority invariants;
+- explicit RAGE-as-tool policy;
+- regression tests for deterministic state semantics.
+
+* Conditions
+
+1. This decision does not approve an LLM provider adapter.
+2. This decision does not approve autonomous RAGE recursion.
+3. This decision does not approve unrestricted tools/effects.
+4. Future development admission must be executable rather than documentation-only.
+5. Provider adapters must prove fresh session/context identity.
+6. Verifier-owned failure classification and immutable artifact storage remain required follow-ups.
+7. Runtime test results must not be claimed unless executed.
+
+* Routing
+
+Proceed to bounded bootstrap development. After implementation, run an independent exact-head verification. If SWI-Prolog is unavailable in the verification environment, record runtime verification as blocked rather than treating static inspection as a pass.
+
+* Changelog
+
+| Date | Change |
+|------+--------|
+| 2026-08-24 | Approved the first contract-only Consortium ADARD bootstrap. |

@@ -1,0 +1,128 @@
+#+title: CONSORTIUM-DESIGN-000 ADARD Control Plane
+#+description: Contract-first architecture for isolated ADARD workers coordinated by Prolog-RLM with durable artifacts, deterministic gates, and bounded RAGE escalation.
+#+status: APPROVED-FOR-BOOTSTRAP
+#+filetags: :consortium:design:adard:prolog-rlm:rage:
+
+* Basis
+
+- [[file:../research/CONSORTIUM-RESEARCH-000-first-adard-bootstrap.org][CONSORTIUM-RESEARCH-000 First ADARD Bootstrap]]
+
+* Objective
+
+Provide the minimum stable control-plane contract required to execute ADARD without sharing hidden model context between phases or duplicating Prolog-RLM's execution/authority runtime.
+
+* Canonical phases
+
+1. =analyze=
+2. =design=
+3. =adversarial_review=
+4. =resolve=
+5. =develop=
+6. =verify=
+
+The first five names encode ADARD. Verification is an independent terminal gate.
+
+* Phase isolation contract
+
+Every model-bearing phase starts with a fresh provider/model conversation. A phase input packet may contain only explicit inspectable state:
+
+- run identity and bounded goal
+- relevant durable Prolog facts
+- required prior phase artifacts by immutable identity
+- cited source/evidence references
+- explicit capability set
+- token/time/tool budget
+- stop conditions and output schema
+
+Hidden chain-of-thought, ambient chat history, and undocumented worker memory are not valid cross-phase inputs.
+
+* Durable state
+
+Prolog owns:
+
+- legal phase transitions
+- run/attempt lineage
+- artifact identities and hashes
+- budgets and exhaustion
+- capabilities/authority
+- cancellation
+- failure classification
+- RAGE escalation count
+- exact implementation identity awaiting verification
+
+Large prose artifacts remain external durable artifacts and are referenced from Prolog by identity/hash rather than copied wholesale into facts.
+
+* Gate semantics
+
+** Analyze -> Design
+
+Requires a completed analysis artifact with evidence, constraints, unknowns, rejected alternatives, and falsifiers.
+
+** Design -> Adversarial Review
+
+Requires an immutable design artifact.
+
+** Adversarial Review -> Resolve
+
+Review must bind to the exact design identity and independently enumerate material failure modes, unsupported assumptions, security/effect risks, testability defects, and contradictory evidence.
+
+** Resolve -> Develop
+
+Only an explicit =approve= decision may admit development. =revise= returns to design, =research= returns to analyze, =reject= terminates, and =blocked= stops pending an external dependency.
+
+** Develop -> Verify
+
+Development is TDD-first and emits an implementation identity plus test/effect evidence.
+
+** Verify -> Complete/Repair/ADARD
+
+Verification binds to the exact implementation identity. Failure must be classified before routing:
+
+- local implementation defect -> bounded develop repair
+- missing evidence -> analyze
+- architectural failure -> design
+- architectural unknown -> analyze
+- unsafe/unverifiable -> blocked
+
+* RAGE tool boundary
+
+RAGE is not another implicit scheduler. Consortium invokes a RAGE adapter only when a deterministic gate classifies the problem as requiring renewed analysis/design and a RAGE budget remains.
+
+RAGE execution receives an immutable packet and returns durable artifacts plus structured status. It cannot widen its own capabilities or recursion budget.
+
+* Model routing
+
+The core contract does not pick models. A later routing policy may choose different models/effort levels per phase. Independence is semantic, not vendor-specific: workers may use the same model family only if each phase receives a fresh context and no hidden transcript state.
+
+* Async frontend boundary
+
+Frontends such as Emacs/OpenCode are observers/controllers, not workflow authorities. Long-running phases expose asynchronous start/status/event/cancel/result operations. UI cancellation becomes a control-plane cancellation request and stale frontend callbacks cannot mutate newer run state.
+
+* Bootstrap implementation
+
+This first slice provides:
+
+- repository mission/agent contracts
+- =consortium.toml= policy defaults
+- deterministic phase/failure-routing facts in =prolog/adard_state.pl=
+- =schema/adard-run.schema.json= for durable run records
+- this research/design trail
+
+It deliberately does not implement providers, persistence, OpenCode transport, RAGE execution, or effectful tools.
+
+* Acceptance criteria
+
+- phase order is explicit and deterministic;
+- every model-bearing phase is marked fresh-context;
+- design/develop/verify prerequisites are explicit;
+- local failures do not route to architecture by default;
+- a run record has explicit token budgets, artifact hashes, and RAGE lineage;
+- RAGE is configured as a tool/escalation boundary;
+- no provider-specific execution logic exists in the bootstrap;
+- runtime verification is not claimed until SWI-Prolog and schema tests actually execute.
+
+* Changelog
+
+| Date | Change |
+|------+--------|
+| 2026-08-24 | First bounded ADARD control-plane design. |

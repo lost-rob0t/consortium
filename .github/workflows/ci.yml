@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "adard/**"]
+  pull_request:
+
+jobs:
+  bootstrap-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install SWI-Prolog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y swi-prolog-nox
+
+      - name: Run ADARD state tests
+        run: swipl -q -g run_tests -t halt -s test/adard_state_tests.pl
+
+      - name: Parse durable contracts
+        run: |
+          python3 -m json.tool schema/adard-run.schema.json >/dev/null
+          python3 - <<'PY'
+          import pathlib
+          import tomllib
+
+          with pathlib.Path("consortium.toml").open("rb") as stream:
+              config = tomllib.load(stream)
+
+          assert config["control_plane"]["fresh_context_per_phase"] is True
+          assert config["control_plane"]["hidden_transcript_transfer"] is False
+          assert config["rage"]["mode"] == "tool"
+          PY
+
+      - name: Reject whitespace errors
+        run: |
+          base="$(git merge-base HEAD origin/main)"
+          git diff --check "$base" HEAD

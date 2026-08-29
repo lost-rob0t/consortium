@@ -1,0 +1,76 @@
+#+title: Consortium
+#+description: Prolog-RLM-backed orchestration for independent model workers, durable reasoning artifacts, and gated ADARD/RAGE execution.
+
+* Consortium
+
+Consortium is a control plane for agentic work where multiple language-model workers operate with fresh context while durable state lives outside any one model conversation.
+
+The initial workflow is ADARD:
+
+1. *Analyze* — establish repository state, evidence, constraints, unknowns, and a bounded problem statement.
+2. *Design* — produce an implementation-ready design from the promoted analysis artifact.
+3. *Adversarial Review* — independently attack the design, evidence, assumptions, security, failure modes, and testability.
+4. *Resolve* — adjudicate the design and review into an explicit decision gate: approve, revise, research, or reject.
+5. *Develop* — realize an approved design TDD-first.
+6. *Verify* — independently verify the exact implementation head. Verification is a terminal gate, not shared-context self-review.
+
+RAGE (Recursive Analysis with Gated Execution) is an escalation workflow that may be invoked when evidence or verification shows that another bounded analysis/design cycle is required. A local implementation defect does not automatically restart architecture research.
+
+* Architecture
+
+#+begin_src text
+user goal
+   |
+   v
+Prolog-RLM / Consortium supervisor
+   |
+   +-- durable facts, budgets, authority, lineage
+   +-- immutable phase input packet
+   |
+   v
+fresh-context phase worker
+   |
+   v
+durable phase artifact
+   |
+   v
+deterministic gate
+   |
+   +-- next ADARD phase
+   +-- bounded revision/research
+   +-- RAGE escalation
+   `-- terminal result
+#+end_src
+
+No phase worker inherits another worker's hidden chat transcript. Cross-phase knowledge must be carried through explicit artifacts, evidence references, and the durable Prolog knowledge base.
+
+* Bootstrap layout
+
+#+begin_src text
+AGENTS.md
+consortium.toml
+prolog/adard_state.pl
+schema/adard-run.schema.json
+roam/research/       evidence and analysis
+roam/design/         approved/bounded designs
+runs/                ignored runtime state (future)
+#+end_src
+
+The first bootstrap intentionally does not choose an LLM provider, OpenCode transport, persistence engine, or RAGE implementation adapter. Those are downstream execution slices after the ADARD contract is reviewed.
+
+* Invariants
+
+- Prolog owns workflow state, transition legality, budgets, authority, lineage, cancellation semantics, and durable facts.
+- Models produce proposals and observations; model prose never becomes executable authority by itself.
+- Every phase receives an immutable, bounded input packet.
+- Every phase worker starts with fresh model context.
+- Cross-phase context is explicit and inspectable.
+- Design cannot begin without an analysis artifact.
+- Development cannot begin without an approved resolve decision.
+- Verification runs against an exact implementation identity.
+- Failed verification is classified before escalation; local bugs go to bounded repair, architectural failures may re-enter ADARD/RAGE.
+- No silent context sharing, silent capability widening, or unbounded recursion.
+
+* License
+
+GPL-2.0; see =LICENSE=.

@@ -1,0 +1,31 @@
+{
+  "run_id": "run-fixture",
+  "task": "validate the harness",
+  "state": "running",
+  "phase": "analyze",
+  "budget": {
+    "max_total_tokens": 8192,
+    "max_cost_usd": 0.25,
+    "time_limit": 30.0
+  },
+  "artifacts": ["context_packet-analyze-1"],
+  "lineage": {
+    "parent_run_id": null,
+    "rage_cycle": 0
+  },
+  "usage": {
+    "model_calls": 0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0,
+    "cost_usd": 0.0,
+    "tokens_known": true,
+    "cost_known": true
+  },
+  "implementation_identity": null,
+  "approved_decisions": [],
+  "generation": 1,
+  "repair_attempts": 0,
+  "rage_cycles": 0,
+  "started_at": 1787620000.0
+}

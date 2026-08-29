@@ -1,0 +1,12 @@
+{
+  "run_id": "run-fixture",
+  "sequence": 1,
+  "event_id": "run-fixture:1",
+  "timestamp": "2026-08-25T00:00:00Z",
+  "type": "run.started",
+  "phase": "none",
+  "worker": "none",
+  "payload": {
+    "task": "validate the harness"
+  }
+}

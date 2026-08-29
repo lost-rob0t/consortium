@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consortium.local/schema/consortium-event.schema.json",
+  "title": "Consortium event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "sequence",
+    "event_id",
+    "timestamp",
+    "type",
+    "phase",
+    "worker",
+    "payload"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "event_id": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "type": {
+      "enum": [
+        "run.started",
+        "run.completed",
+        "run.failed",
+        "run.cancelled",
+        "phase.started",
+        "phase.completed",
+        "phase.failed",
+        "worker.started",
+        "worker.completed",
+        "worker.cancelled",
+        "worker.stale",
+        "artifact.created",
+        "usage.updated",
+        "verification.started",
+        "verification.completed",
+        "verification.failed",
+        "repair.started",
+        "rage.started"
+      ]
+    },
+    "phase": {
+      "type": ["string", "null"]
+    },
+    "worker": {
+      "type": ["string", "null"]
+    },
+    "payload": { "type": "object" }
+  }
+}

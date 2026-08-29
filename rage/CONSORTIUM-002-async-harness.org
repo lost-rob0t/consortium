@@ -1,0 +1,33 @@
+#+title: CONSORTIUM-002 Thin Async ADARD Harness
+#+status: IN-PROGRESS
+#+filetags: :consortium:adard:async:prolog-rlm:
+
+* Run identity
+
+- Consumed issue :: #2
+- Branch :: =adard/2-async-harness=
+- RAGE start commit :: =1fdc4b75963e3561647a60c940072928de6a1c0d=
+- Bootstrap PR :: https://github.com/lost-rob0t/consortium/pull/1
+- Prolog-RLM revision :: =982bad23c59dba0dd9157c1904e7723950889717=
+
+* Evidence
+
+- PR #1 is the executable contract base and remains stacked below this slice.
+- The parallel =adard/000-bootstrap-research= branch supplied additional
+  evidence about immutable artifacts, attempt fencing, and fresh-root tests; it
+  is design input, not an alternate implementation base.
+- Prolog-RLM already supplies bounded Futures, cancellation, provider-neutral
+  completion, immutable artifact storage, capability narrowing, usage records,
+  and trace metadata. No second scheduler or new Prolog-RLM primitive is needed.
+- Prolog-RLM's packaged =prolog-rlm-swipl= wrapper is the reliable downstream
+  Nix runtime boundary outside a development shell.
+
+* Stop condition
+
+Stop at one reviewable Consortium PR after deterministic local and exact-head
+CI verification. Open a separate Prolog-RLM issue and PR before changing that
+repository if implementation demonstrates a missing domain-neutral primitive.
+
+* Verification record
+
+Pending candidate head.

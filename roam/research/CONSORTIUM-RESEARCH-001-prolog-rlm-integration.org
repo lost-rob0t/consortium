@@ -1,0 +1,51 @@
+#+title: CONSORTIUM-RESEARCH-001 Prolog-RLM Integration Surface
+#+status: COMPLETE
+#+filetags: :consortium:research:prolog-rlm:async:
+
+* Question
+
+What is the smallest Consortium-specific execution harness that satisfies the
+ADARD bootstrap contract and a fully asynchronous Emacs boundary without
+duplicating Prolog-RLM runtime behavior?
+
+* Repository evidence
+
+- Consortium PR #1 head =1fdc4b75963e3561647a60c940072928de6a1c0d=
+  defines phase order, fresh-context requirements, gate prerequisites, failure
+  routing, and RAGE-as-tool policy.
+- The accepted parallel artifact-DAG research adds attempt IDs, monotonic
+  fencing, explicit evidence/artifact references, and stale completion rejection.
+- Prolog-RLM =rlm_async= provides a bounded worker pool, finite backlog, opaque
+  Futures, callbacks, cancellation, parent-child cancellation, and metadata.
+- Prolog-RLM =rlm_completion:llm_query_async/3= starts provider-neutral model
+  work as a Future and constructs a request containing one user message.
+- Prolog-RLM =rlm_artifact= provides immutable versioned memory and persistent
+  artifact stores with bounded context packs and provenance.
+- Prolog-RLM =rlm_tool:capabilities_narrow/3= rejects child widening.
+- Completion outcomes preserve normalized usage and unknown-value markers.
+- Prolog-RLM's flake exports =packages.<system>.prolog-rlm= and the packaged
+  =prolog-rlm-swipl= interpreter wrapper.
+
+* Result
+
+No Prolog-RLM change is required. Consortium can submit each phase through
+=llm_query_async/3=, register a completion callback, and submit the next phase
+only after deterministic policy admits it. This is callback composition over
+the existing scheduler, not a scheduler of its own.
+
+The persistent frontend is a single JSON Lines stdio process. Its main thread
+continues reading commands while Prolog-RLM workers execute phases. Event
+notifications are pushed on the same structured stream and all writes are
+serialized.
+
+* Rejected alternatives
+
+- One Future around the complete ADARD loop: rejected because synchronous model
+  calls inside that worker would nest Future waits and waste the bounded pool.
+- A Consortium thread pool: rejected as a duplicate scheduler.
+- Transcript continuation between phases: rejected because it violates the
+  primary fresh-context invariant.
+- ADARD policy in Prolog-RLM: rejected because it is project-specific workflow
+  semantics.
+- Poll-only CLI commands: rejected because Emacs must remain responsive and a
+  push stream is practical.

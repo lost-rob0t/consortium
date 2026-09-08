@@ -27,6 +27,8 @@ initial_phase(analyze).
 terminal_state(complete).
 terminal_state(rejected).
 terminal_state(blocked).
+terminal_state(cancelled).
+terminal_state(failed).
 
 normal_transition(analyze, design).
 normal_transition(design, adversarial_review).

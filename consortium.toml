@@ -7,6 +7,8 @@ runtime = "prolog-rlm"
 workflow = "adard"
 fresh_context_per_phase = true
 hidden_transcript_transfer = false
+transport = "jsonl-stdio"
+async_boundary = true
 
 [adard]
 phases = ["analyze", "design", "adversarial_review", "resolve", "develop", "verify"]
@@ -25,3 +27,23 @@ require_explicit_stop_condition = true
 enabled = true
 mode = "tool"
 auto_escalate_local_failures = false
+
+[models]
+provider = "openrouter"
+root-agent = "openai/gpt-oss-120b"
+analyze = "openai/gpt-oss-120b"
+design = "openai/gpt-oss-120b"
+adversarial_review = "openai/gpt-oss-120b"
+resolve = "openai/gpt-oss-120b"
+develop = "openai/gpt-oss-120b"
+verify = "openai/gpt-oss-120b"
+
+[events]
+schema = "consortium.event.v1"
+push = true
+replay = true
+
+[artifacts]
+backend = "prolog-rlm"
+max_packet_artifacts = 16
+max_packet_chars = 12000

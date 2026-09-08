@@ -1,0 +1,107 @@
+#+title: CONSORTIUM-DESIGN-001 Thin Async ADARD Harness
+#+status: APPROVED-FOR-SLICE
+#+filetags: :consortium:design:adard:async:prolog-rlm:
+
+* Inputs
+
+- [[file:../research/CONSORTIUM-RESEARCH-001-prolog-rlm-integration.org][CONSORTIUM-RESEARCH-001 Prolog-RLM Integration Surface]]
+- [[file:CONSORTIUM-DESIGN-000-adard-control-plane.org][CONSORTIUM-DESIGN-000 ADARD Control Plane]]
+- GitHub issue #2
+
+* Boundary
+
+Consortium owns phase policy, role routing, packet construction, run state,
+artifact naming, failure classification routes, and frontend protocol. It uses
+Prolog-RLM for every latency-bearing phase Future, cancellation, model call,
+capability narrowing, immutable artifact storage, and usage reporting.
+
+* Execution
+
+1. =start= validates closed options, allocates a stable run ID, records
+   =run.started=, admits =analyze= through Prolog-RLM, and returns immediately.
+2. Phase admission allocates a fresh attempt ID, generation, and session ID.
+3. A bounded packet is materialized as an immutable artifact before the model
+   Future starts.
+4. The model receives only one newly constructed user prompt containing that
+   packet. No prior provider messages or transcript fields are accepted.
+5. A Future callback validates the current attempt/generation fence, records
+   usage and output artifacts, applies deterministic policy, then admits the
+   next phase.
+6. Completion reaches a terminal state only through verification bound to the
+   exact implementation identity.
+
+Callbacks do not wait for another Future. They only perform bounded state and
+artifact work and submit the next phase.
+
+* State and fencing
+
+Each run records the active attempt and a monotonically increasing generation.
+Cancellation changes the run to =cancelled= and revokes the active generation
+before calling =rlm_future_cancel/2=. A callback can advance state only when its
+run is active and both attempt and generation still match. Late results may be
+observed but cannot complete or otherwise advance the run.
+
+* Packets
+
+Packets contain task, repository identity, explicit artifact/fact/evidence
+references, constraints, acceptance criteria, role/model selection, narrowed
+capabilities, a narrowed phase budget, attempt/session identity, and provenance.
+The keys =messages=, =transcript=, =conversation=, and =hidden_context= are
+forbidden recursively.
+
+Artifact references are bounded by count and packet text by byte/token policy.
+No complete prior output history is copied into the packet.
+
+* Routing
+
+Role-to-model values are configuration data. Deterministic tests inject a fake
+model handler through Prolog-RLM's supported completion fixture seam. Production
+requests may supply provider/model configuration without changing ADARD policy.
+
+Verifier-owned classification controls failure routing:
+
+- local implementation defect -> bounded =develop -> verify= repair;
+- missing evidence -> bounded =analyze= re-entry;
+- architectural failure -> explicitly budgeted RAGE cycle beginning at =design=;
+- unsafe or unverifiable -> =blocked=.
+
+No ordinary compile/test/local defect invokes RAGE.
+
+* Protocol
+
+The daemon reads one JSON object per line and emits serialized JSON objects:
+
+- request: ={id, method, params}=
+- response: ={kind:"response", id, ok, result|error}=
+- pushed event: ={kind:"event", event}=
+
+Methods are =start=, =status=, =cancel=, =events=, =artifact=, =subscribe=,
+=unsubscribe=, and =shutdown=. Event records include run ID, monotonic sequence,
+stable event ID, UTC timestamp, type, optional phase/worker, and structured
+payload. Subscriptions push new events; =events= supports replay from a sequence.
+
+* Durability
+
+Phase packets and outputs use Prolog-RLM's immutable artifact store. The daemon
+uses its persistent backend under an operator-selected state directory; tests
+use the memory backend. Run events are replayable for the process lifetime in
+this slice. Crash recovery of active Futures is explicitly deferred.
+
+* Acceptance mapping
+
+- barriers prove immediate start and deterministic cancellation without sleeps;
+- event assertions prove ordering, replay, and terminal state reconstruction;
+- packet artifacts prove fresh sessions, explicit refs, and transcript absence;
+- fake scenarios prove successful ADARD, local repair, and bounded architectural
+  escalation;
+- capability and budget tests prove child narrowing;
+- verification packet assertions prove exact implementation binding;
+- a subprocess protocol test proves the Emacs-style client interaction;
+- flake checks run all deterministic tests, schema/config validation, source
+  loading, package smoke, and executable help outside the source tree.
+
+* Non-goals
+
+No polished Emacs UI, OpenCode integration, generic runtime, unrestricted coding
+tool catalog, provider lock-in, automatic unbounded RAGE, active-run crash
+recovery, or hidden transcript persistence is included.

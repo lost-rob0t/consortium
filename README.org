@@ -44,19 +44,56 @@ deterministic gate
 
 No phase worker inherits another worker's hidden chat transcript. Cross-phase knowledge must be carried through explicit artifacts, evidence references, and the durable Prolog knowledge base.
 
-* Bootstrap layout
+* Async harness
+
+The harness is a persistent JSON Lines stdio process intended for Emacs
+=make-process=. Starting a run admits the first Prolog-RLM Future and returns a
+stable run ID without waiting for model work:
+
+#+begin_src sh
+nix run . -- --help
+nix run . -- daemon --memory
+#+end_src
+
+Protocol requests have ={id, method, params}= and responses carry the same
+=id=. The process also pushes ={kind:"event", event:{...}}= records. Supported
+methods are =start=, =status=, =events=, =artifact=, =cancel=, =subscribe=,
+=unsubscribe=, and =shutdown=.
+
+Every phase is a separate =rlm_completion:llm_query_async/3= Future with a fresh
+session ID and one explicit packet. A completion callback records immutable
+Prolog-RLM artifacts and submits the next admitted phase; Consortium does not
+own a scheduler or thread pool. Cancellation revokes the current attempt fence
+before cancelling the active Future, so late output cannot advance state.
+
+Tests use deterministic =fake(...)= workers. Trusted embedding code may select
+=rlm(Provider, ProviderName)= for direct provider execution or
+=completion(Options)= for Prolog-RLM typed plans, tools, and subagents. Role to
+model descriptors remain Consortium configuration in =consortium.toml= or the
+run's =models(...)= option.
+
+* Layout
 
 #+begin_src text
 AGENTS.md
 consortium.toml
 prolog/adard_state.pl
+prolog/consortium_agent.pl
+prolog/consortium_adard.pl
+prolog/consortium_models.pl
+prolog/consortium_packets.pl
+prolog/consortium_protocol.pl
+bin/consortium.pl
 schema/adard-run.schema.json
+schema/consortium-event.schema.json
 roam/research/       evidence and analysis
 roam/design/         approved/bounded designs
-runs/                ignored runtime state (future)
+rage/                 exact-run engineering evidence
 #+end_src
 
-The first bootstrap intentionally does not choose an LLM provider, OpenCode transport, persistence engine, or RAGE implementation adapter. Those are downstream execution slices after the ADARD contract is reviewed.
+Runtime artifacts use Prolog-RLM's memory or persistent artifact backend. Active
+Future recovery after daemon restart and a polished Emacs UI remain downstream
+slices.
 
 * Invariants
 

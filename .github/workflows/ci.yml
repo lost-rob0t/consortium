@@ -6,37 +6,32 @@ on:
   pull_request:
 
 jobs:
-  bootstrap-contracts:
+  flake-gates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Install SWI-Prolog
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y swi-prolog-nox
+      - name: Assert exact requested head
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
 
-      - name: Run ADARD state tests
-        run: swipl -q -g run_tests -t halt -s test/adard_state_tests.pl
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - name: Parse durable contracts
-        run: |
-          python3 -m json.tool schema/adard-run.schema.json >/dev/null
-          python3 - <<'PY'
-          import pathlib
-          import tomllib
+      - name: Check flake
+        run: nix flake check --show-trace
 
-          with pathlib.Path("consortium.toml").open("rb") as stream:
-              config = tomllib.load(stream)
+      - name: Build default package
+        run: nix build .#default --no-link --print-build-logs
 
-          assert config["control_plane"]["fresh_context_per_phase"] is True
-          assert config["control_plane"]["hidden_transcript_transfer"] is False
-          assert config["rage"]["mode"] == "tool"
-          PY
+      - name: Run packaged help
+        run: nix run . -- --help
 
       - name: Reject whitespace errors
         run: |
           base="$(git merge-base HEAD origin/main)"
           git diff --check "$base" HEAD
+          git diff --check

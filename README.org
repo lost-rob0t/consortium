@@ -60,17 +60,38 @@ Protocol requests have ={id, method, params}= and responses carry the same
 methods are =start=, =status=, =events=, =artifact=, =cancel=, =subscribe=,
 =unsubscribe=, and =shutdown=.
 
-Every phase is a separate =rlm_completion:llm_query_async/3= Future with a fresh
-session ID and one explicit packet. A completion callback records immutable
-Prolog-RLM artifacts and submits the next admitted phase; Consortium does not
-own a scheduler or thread pool. Cancellation revokes the current attempt fence
-before cancelling the active Future, so late output cannot advance state.
+Every phase receives a fresh session ID and one explicit packet. Consortium
+submits the phase through Prolog-RLM's canonical async runtime and receives an
+opaque Future; it does not own a scheduler or thread pool. Direct provider
+workers use =rlm_chain:chain_invoke_async/4=. Trusted completion workers use
+=rlm_completion:rlm_completion_async/4=, while deterministic fake workers use
+=rlm_completion:llm_query_async/3= with an injected handler. Completion callbacks
+record immutable Prolog-RLM artifacts and submit only the next admitted phase.
+Cancellation revokes the current attempt fence before cancelling the active
+Future, so late output cannot advance state.
 
 Tests use deterministic =fake(...)= workers. Trusted embedding code may select
 =rlm(Provider, ProviderName)= for direct provider execution or
 =completion(Options)= for Prolog-RLM typed plans, tools, and subagents. Role to
 model descriptors remain Consortium configuration in =consortium.toml= or the
 run's =models(...)= option.
+
+* Prolog-RLM runtime boundary
+
+Consortium deliberately depends on Prolog-RLM rather than reimplementing its
+generic runtime. The pinned upstream revision is tested as an ABI contract on
+every =nix flake check=.
+
+Prolog-RLM owns Futures/scheduling, providers, tools, capability narrowing,
+context runtime, generic plans, skills, delegation, streaming primitives, and
+the artifact store. Consortium owns ADARD/RAGE phase policy, phase packets,
+workflow lineage/fencing, repair and escalation policy, exact implementation
+binding, and the Consortium protocol/UI projection.
+
+The compatibility suite in =test/prolog_rlm_contract_tests.pl= intentionally
+fails when a directly consumed upstream predicate disappears or changes shape.
+That keeps upstream drift visible at the integration boundary instead of
+silently growing compatibility code in Consortium.
 
 * Layout
 

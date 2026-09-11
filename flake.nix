@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/bfc1b8a4574108ceef22f02bafcf6611380c100d";
 
     prolog-rlm = {
-      url = "github:lost-rob0t/prolog-rlm/7df793f7e484bd947839b4670a474926f1b7c5dc";
+      url = "github:lost-rob0t/prolog-rlm/e1ed6c2b5f717d9bb380fcf22d144737299197f8";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

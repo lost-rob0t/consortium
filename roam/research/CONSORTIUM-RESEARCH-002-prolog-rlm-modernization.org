@@ -1,0 +1,67 @@
+#+title: CONSORTIUM-RESEARCH-002 Prolog-RLM modernization audit
+#+date: 2026-09-11
+#+status: implemented
+#+issue: https://github.com/lost-rob0t/consortium/issues/5
+
+* Question
+
+What changed between Consortium's original Prolog-RLM pin and current GitHub
+main, and which contracts must Consortium actually own?
+
+* Baseline
+
+Consortium was pinned to Prolog-RLM
+=7df793f7e484bd947839b4670a474926f1b7c5dc=. The modernization slice moves to
+=e1ed6c2b5f717d9bb380fcf22d144737299197f8=.
+
+The upstream history between those points is large, but most additions are
+*generic runtime functionality* that Consortium must consume rather than copy:
+
+- direct/native model execution;
+- plan-graph execution;
+- context mounts and project-query support;
+- skill catalogs/skill graphs;
+- typed delegation;
+- result acceptance;
+- streaming model execution;
+- richer runtime status and deadline handling.
+
+* Verified contracts used by Consortium
+
+The current runtime still exports the integration boundary Consortium already
+uses:
+
+- =rlm_async:rlm_future_*= for asynchronous lifecycle and cancellation;
+- =rlm_chain:chain_invoke_async/4= for provider-native structured phase calls;
+- =rlm_completion:llm_query_async/3= and =rlm_completion_async/4= for trusted
+  embedding paths;
+- =rlm_tool:capability_allowed/2= and =capabilities_narrow/3= for authority
+  narrowing;
+- =rlm_artifact:artifact_*= for immutable cross-phase artifacts.
+
+The new contract test suite locks these symbols explicitly so future upstream
+changes fail as integration failures instead of surfacing later as daemon
+behavior drift.
+
+* Ownership decision
+
+Consortium continues to own only:
+
+- ADARD/RAGE phase policy and legal transitions;
+- fresh-context phase packet construction;
+- workflow lineage, fencing, retry/escalation policy, and exact implementation
+  binding;
+- Consortium protocol/UI projection.
+
+Prolog-RLM continues to own scheduling/Futures, providers, tools, capabilities,
+context runtime, skills, generic plans, delegation, streaming primitives, and
+artifact storage.
+
+This means the modernization is an integration rebase, not a rewrite.
+
+* Follow-on work
+
+Issue #6 should use current durable runtime/artifact facilities for restart
+recovery. Issue #7 should project current streaming and runtime-status signals
+through the versioned Consortium protocol. Issue #8 should consume those
+protocol events in Emacs without implementing a second workflow state machine.

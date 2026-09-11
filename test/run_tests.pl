@@ -7,7 +7,8 @@
 
 main(_) :-
     rlm_async_runtime_status(_),
-    load_files([consortium_test('adard_state_tests.pl'),
+    load_files([consortium_test('prolog_rlm_contract_tests.pl'),
+                consortium_test('adard_state_tests.pl'),
                 consortium_test('consortium_agent_tests.pl'),
                 consortium_test('consortium_protocol_tests.pl')],
                [if(changed)]),

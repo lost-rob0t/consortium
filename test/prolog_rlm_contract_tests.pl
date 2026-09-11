@@ -7,8 +7,7 @@
 :- use_module(library(rlm_tool), []).
 
 required_predicate(Module, Name/Arity) :-
-    functor(Head, Name, Arity),
-    current_predicate(Module:Head).
+    current_predicate(Module:Name/Arity).
 
 test(async_future_contract) :-
     maplist(required_predicate(rlm_async),

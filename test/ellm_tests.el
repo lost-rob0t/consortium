@@ -86,7 +86,7 @@
                      '((documents . ("a" "b")))))
       (should (equal (ellm-request-cache request)
                      '(system tools messages)))
-      (should (eq (car (nth 2 callback-result)) 'summary))
+      (should (equal (car callback-result) '((summary . "ok"))))
       (should-not (nth 1 callback-result))
       (should (eq (nth 2 callback-result) request))
       (should

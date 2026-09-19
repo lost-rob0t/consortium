@@ -110,9 +110,30 @@ Consortium/Prolog-RLM control plane.
 
 Backends implement a small async contract with =ellm-register-backend=.  Core
 ELLM has no provider HTTP implementation and loads without gptel, Org-roam, or
-other optional integrations.  Prompt-library adapters, gptel prompt-cache
-mapping, LLM-callable tools, and the Prolog-RLM mesh bridge are tracked as
-separate ELLM slices.
+other optional integrations.
+
+LLM-callable tools are registered separately.  The current ELLM value is the
+default =input=, while model-supplied arguments override or extend it:
+
+#+begin_src emacs-lisp
+(require 'ellm-tools)
+
+(ellm-def-tool output-org-tree (input &key heading)
+  :effect 'pure
+  :description "Render INPUT as an Org tree."
+  (list :heading heading :input input))
+
+(ellm-call-tool
+ 'output-org-tree
+ '((heading . "Recent work"))
+ '((documents . ("a" "b"))))
+#+end_src
+
+Pure tools may execute locally.  Tools marked =effectful= fail closed unless an
+authority bridge is installed; they do not gain local execution authority from
+the model naming them.  Prompt-library adapters, gptel prompt-cache mapping,
+the canonical Org tools, and the Prolog-RLM mesh bridge are separate ELLM
+slices.
 
 * Prolog-RLM runtime boundary
 

@@ -99,7 +99,7 @@ The remaining FORMS are the tool implementation body."
       :schema ,schema
       :effect ,effect
       :metadata ,metadata
-      :function (lambda ,arglist ,@forms))))
+      :function (cl-function (lambda ,arglist ,@forms)))))
 
 (defun ellm-tool (tool)
   "Resolve TOOL to an `ellm-tool' object."

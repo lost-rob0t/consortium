@@ -2,13 +2,26 @@
           [ default_models/1,
             role_model/3,
             run_phase_async/4,
+            ellm_tool_registry/2,
             model_handler/4
           ]).
 
 :- use_module(library(http/json)).
+:- use_module(library(error), [must_be/2]).
+:- use_module(library(option)).
+:- use_module(library(rlm_async), [rlm_async_submit/3]).
 :- use_module(library(rlm_chain), [chain_invoke_async/4]).
 :- use_module(library(rlm_completion)).
-:- use_module(library(rlm_tool), [capability_allowed/2]).
+:- use_module(library(rlm_direct), [rlm_direct_execute/4]).
+:- use_module(library(rlm_tool),
+              [ capability_allowed/2,
+                tool_registry_create/1,
+                tool_registry_destroy/1
+              ]).
+:- use_module(library(rlm_tool_loader),
+              [ rlm_tool_catalog/1,
+                rlm_load_tools/3
+              ]).
 :- use_module(consortium_packets).
 
 default_models(
@@ -67,6 +80,20 @@ run_phase_async(Packet, rlm, Budget, Future) :-
     !,
     route_provider(Packet.model, Provider, ProviderName),
     run_phase_async(Packet, rlm(Provider, ProviderName), Budget, Future).
+run_phase_async(Packet, ellm(EllmOptions), Budget, Future) :-
+    !,
+    require_model_capability(Packet.capabilities,
+                             Packet.model.provider_name),
+    Metadata = async_metadata{
+                   operation:consortium_ellm_phase,
+                   trace_id:Packet.run_id,
+                   session_id:Packet.session_id,
+                   phase:Packet.phase
+               },
+    rlm_async_submit(
+        consortium_models:ellm_phase_execute(Packet, EllmOptions, Budget),
+        Metadata,
+        Future).
 run_phase_async(Packet, completion(CompletionOptions), Budget, Future) :-
     !,
     packet_prompt(Packet, Prompt),
@@ -92,6 +119,131 @@ run_phase_async(Packet, Worker, Budget, Future) :-
               ],
     llm_query_async(Prompt, Options, Future).
 
+ellm_phase_execute(Packet, EllmOptions0, Budget, Outcome) :-
+    packet_prompt(Packet, Prompt),
+    route_provider(Packet.model, Provider, ProviderName),
+    require_model_capability(Packet.capabilities, ProviderName),
+    option(ellm_tools(Tools), EllmOptions0, []),
+    must_be(list, Tools),
+    exclude(runtime_owned_ellm_option, EllmOptions0, EllmOptions),
+    ellm_tool_registry(Tools, Registry),
+    setup_call_cleanup(
+        true,
+        ellm_direct_execute(Packet,
+                            Prompt,
+                            Provider,
+                            ProviderName,
+                            Registry,
+                            EllmOptions,
+                            Budget,
+                            Outcome),
+        ellm_tool_registry_destroy(Registry)).
+
+ellm_direct_execute(Packet,
+                    Prompt,
+                    Provider,
+                    ProviderName,
+                    Registry,
+                    EllmOptions,
+                    Budget,
+                    Outcome) :-
+    Base = [ provider(Provider),
+             provider_name(ProviderName),
+             budget(Budget),
+             trace_id(Packet.run_id),
+             session_id(Packet.session_id),
+             capabilities(Packet.capabilities),
+             child_capabilities(Packet.capabilities),
+             planner_max_tokens(Budget.max_total_tokens)
+           ],
+    ellm_registry_option(Registry, RegistryOptions),
+    append(Base, RegistryOptions, Runtime0),
+    append(Runtime0, EllmOptions, RuntimeOptions),
+    rlm_direct_execute(Prompt, text(""), RuntimeOptions, Outcome).
+
+ellm_registry_option(none, []) :- !.
+ellm_registry_option(Registry, [tool_registry(Registry)]).
+
+runtime_owned_ellm_option(Option) :-
+    functor(Option, Name, 1),
+    memberchk(Name,
+              [ budget,
+                trace_id,
+                session_id,
+                provider,
+                provider_name,
+                capabilities,
+                child_capabilities,
+                tool_registry,
+                ellm_tools
+              ]).
+
+ellm_tool_registry([], none) :- !.
+ellm_tool_registry(Tools0, Registry) :-
+    maplist(require_ellm_tool_name, Tools0, Tools),
+    tool_registry_create(Registry),
+    catch(load_ellm_tools(Registry, Tools),
+          Exception,
+          ( tool_registry_destroy(Registry),
+            throw(Exception)
+          )).
+
+ellm_tool_registry_destroy(none) :- !.
+ellm_tool_registry_destroy(Registry) :-
+    tool_registry_destroy(Registry).
+
+require_ellm_tool_name(Name, Name) :-
+    atom(Name),
+    Name \== '',
+    !.
+require_ellm_tool_name(Name, _) :-
+    throw(error(type_error(ellm_tool_name, Name),
+                context(consortium_models:ellm_tool_registry/2,
+                        'ELLM tool names must be non-empty atoms'))).
+
+load_ellm_tools(Registry, Tools) :-
+    rlm_tool_catalog(Catalog),
+    maplist(ellm_tool_pack(Catalog), Tools, Packs0),
+    sort(Packs0, Packs),
+    maplist(load_ellm_tool_pack(Registry), Packs).
+
+ellm_tool_pack(Catalog, Tool, Pack) :-
+    findall(Candidate,
+            catalog_tool_pack(Catalog, Tool, Candidate),
+            Candidates0),
+    sort(Candidates0, Candidates),
+    ellm_tool_pack_candidates(Tool, Candidates, Pack).
+
+catalog_tool_pack(Catalog, Tool, Pack) :-
+    member(Info, Catalog),
+    is_dict(Info),
+    get_dict(status, Info, declared),
+    get_dict(pack, Info, Pack),
+    get_dict(tools, Info, Exports),
+    member(Export, Exports),
+    is_dict(Export),
+    get_dict(name, Export, Tool).
+
+ellm_tool_pack_candidates(_, [Pack], Pack) :- !.
+ellm_tool_pack_candidates(Tool, [], _) :-
+    throw(error(consortium_error(unknown_ellm_tool(Tool)),
+                context(consortium_models:ellm_tool_registry/2,
+                        'requested ELLM tool is absent from trusted Prolog-RLM manifests'))).
+ellm_tool_pack_candidates(Tool, Packs, _) :-
+    throw(error(consortium_error(ambiguous_ellm_tool(Tool, Packs)),
+                context(consortium_models:ellm_tool_registry/2,
+                        'requested ELLM tool is declared by multiple trusted packs'))).
+
+load_ellm_tool_pack(Registry, Pack) :-
+    rlm_load_tools(Registry, Pack, Outcome),
+    require_ellm_tool_pack_loaded(Pack, Outcome).
+
+require_ellm_tool_pack_loaded(_, ok(_)) :- !.
+require_ellm_tool_pack_loaded(Pack, error(Error)) :-
+    throw(error(consortium_error(ellm_tool_pack_failed(Pack, Error)),
+                context(consortium_models:ellm_tool_registry/2,
+                        'trusted Prolog-RLM tool pack failed to load'))).
+
 fake_worker(fake(_)).
 fake_worker(barrier(_, _, _)).
 
@@ -111,6 +263,7 @@ runtime_owned_completion_option(Option) :-
     functor(Option, Name, 1),
     memberchk(Name,
               [budget, trace_id, session_id,
+               provider, provider_name, tool_registry, ellm_tools,
                capabilities, child_capabilities]).
 
 require_model_capability(Capabilities, ProviderName) :-

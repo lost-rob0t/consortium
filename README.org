@@ -152,7 +152,46 @@ store model answers and call that prompt caching.  Direct gptel requests expose
 only =pure= ELLM tools.  Effectful tools stay behind the Consortium/Prolog-RLM
 bridge.
 
-The canonical Org tools and Prolog-RLM mesh bridge are separate ELLM slices.
+For controlled worker runs, ELLM compiles actors into the existing Consortium
+protocol rather than executing an Elisp-side agent loop:
+
+#+begin_src emacs-lisp
+(require 'ellm-consortium)
+
+(ellm-register-actor
+ 'worker
+ :model "openrouter/glm-5.3-flash"
+ :skills '(simple-output)
+ ;; output-org-tree is pure/local and is not sent to the daemon.
+ ;; project_read is an inert server tool name and must resolve from a trusted
+ ;; Prolog-RLM tool-pack manifest.
+ :tools '(output-org-tree project_read))
+
+(ellm-consortium-submit
+ 'worker
+ "Implement the current Consortium issue."
+ :repository '((kind . "git") (value . "lost-rob0t/consortium"))
+ :callback
+ (lambda (run-id error)
+   (if error
+       (message "worker rejected: %S" error)
+     (message "worker run: %s" run-id))))
+#+end_src
+
+The bridge sends model, skill, and server-tool *names*, never Elisp callables.
+Consortium resolves requested tool names against loaded, trusted Prolog-RLM
+tool-pack manifests, grants only the corresponding explicit =tool(Name)=
+capabilities, and executes each phase inside the pinned Prolog-RLM direct
+runtime.  The tool registry is phase-scoped and cleaned with the async worker,
+including cancellation paths.  Consortium's existing run IDs, events, status,
+artifacts, fencing, budgets, and cancellation remain the lifecycle authority.
+
+Per-role model routing is available through =:actors= on
+=ellm-consortium-options= / =ellm-consortium-submit=.  Tools and skills are the
+stable union of those explicit actors for this first bridge slice; pure local
+tools are filtered out before the protocol boundary.
+
+The canonical Org/Org-roam tools are a separate ELLM slice.
 
 * Prolog-RLM runtime boundary
 
@@ -182,6 +221,11 @@ prolog/consortium_adard.pl
 prolog/consortium_models.pl
 prolog/consortium_packets.pl
 prolog/consortium_protocol.pl
+emacs/consortium.el
+emacs/ellm.el
+emacs/ellm-tools.el
+emacs/ellm-gptel.el
+emacs/ellm-consortium.el
 bin/consortium.pl
 schema/adard-run.schema.json
 schema/consortium-event.schema.json

@@ -7,6 +7,7 @@
 :- use_module(library(filesex)).
 :- use_module(library(http/json)).
 :- use_module(library(readutil)).
+:- use_module(library(error), [must_be/2]).
 :- use_module(library(rlm_chain), [openrouter_provider/2]).
 :- use_module(consortium_agent).
 
@@ -205,6 +206,23 @@ protocol_ground_pair(Key-Value0, Key-Value) :-
     protocol_ground(Value0, Value).
 
 protocol_execution_options(Dict, Options) :-
+    get_dict(worker, Dict, "ellm"),
+    !,
+    get_dict(provider, Dict, "openrouter"),
+    get_dict(models, Dict, ModelDict),
+    openrouter_model_routes(ModelDict, Models),
+    protocol_named_list(skills, Dict, Skills),
+    protocol_named_list(tools, Dict, Tools),
+    maplist(ellm_tool_capability, Tools, ToolCapabilities),
+    append([rlm, model(openrouter)], ToolCapabilities, Capabilities0),
+    sort(Capabilities0, Capabilities),
+    EllmOptions = [explicit_skills(Skills), ellm_tools(Tools)],
+    Options = [ worker(ellm(EllmOptions)),
+                models(Models),
+                capabilities(Capabilities),
+                phase_capabilities(Capabilities)
+              ].
+protocol_execution_options(Dict, Options) :-
     get_dict(worker, Dict, "rlm"),
     !,
     get_dict(provider, Dict, "openrouter"),
@@ -249,6 +267,38 @@ openrouter_role_route(ModelDict, Role, Route) :-
     Route = model_route{provider:Provider,
                         provider_name:openrouter,
                         model:Model}.
+
+protocol_named_list(Key, Dict, Names) :-
+    (   get_dict(Key, Dict, Values)
+    ->  must_be(list, Values),
+        length(Values, Count),
+        (   Count =< 64
+        ->  maplist(protocol_name_atom(Key), Values, Names)
+        ;   throw(error(domain_error(bounded_name_list, Key-Count),
+                        context(consortium_protocol:protocol_options/2,
+                                'ELLM name lists are limited to 64 entries')))
+        )
+    ;   Names = []
+    ).
+
+protocol_name_atom(Key, Value, Name) :-
+    (   string(Value)
+    ->  atom_string(Name, Value)
+    ;   atom(Value)
+    ->  Name = Value
+    ;   throw(error(type_error(text, Value),
+                    context(consortium_protocol:protocol_options/2,
+                            Key)))
+    ),
+    atom_length(Name, Length),
+    (   between(1, 128, Length)
+    ->  true
+    ;   throw(error(domain_error(bounded_name, Key-Name),
+                    context(consortium_protocol:protocol_options/2,
+                            'ELLM names must contain 1..128 characters')))
+    ).
+
+ellm_tool_capability(Name, tool(Name)).
 
 protocol_worker(Dict, fake(blocking)) :-
     get_dict(worker, Dict, "blocking"),

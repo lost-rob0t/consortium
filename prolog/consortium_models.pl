@@ -7,6 +7,7 @@
           ]).
 
 :- use_module(library(http/json)).
+:- use_module(library(error), [must_be/2]).
 :- use_module(library(option)).
 :- use_module(library(rlm_async), [rlm_async_submit/3]).
 :- use_module(library(rlm_chain), [chain_invoke_async/4]).

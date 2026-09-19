@@ -131,9 +131,28 @@ default =input=, while model-supplied arguments override or extend it:
 
 Pure tools may execute locally.  Tools marked =effectful= fail closed unless an
 authority bridge is installed; they do not gain local execution authority from
-the model naming them.  Prompt-library adapters, gptel prompt-cache mapping,
-the canonical Org tools, and the Prolog-RLM mesh bridge are separate ELLM
-slices.
+the model naming them.
+
+The optional gptel adapter reuses gptel's request and tool APIs instead of
+implementing another provider client:
+
+#+begin_src emacs-lisp
+(require 'ellm-gptel)
+
+;; Reuse the existing dotfiles prompt library when it is on load-path.
+(ellm-enable-prompt-lib)
+(ellm-ask 'researcher
+          (ellm-prompt 'daily-update)
+          :cache '(system tools messages))
+#+end_src
+
+ELLM normalizes that cache policy to gptel's =system=, =tool=, and =message=
+cache keys.  The actual cache behavior remains provider-native; ELLM does not
+store model answers and call that prompt caching.  Direct gptel requests expose
+only =pure= ELLM tools.  Effectful tools stay behind the Consortium/Prolog-RLM
+bridge.
+
+The canonical Org tools and Prolog-RLM mesh bridge are separate ELLM slices.
 
 * Prolog-RLM runtime boundary
 

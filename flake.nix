@@ -101,6 +101,18 @@
             touch "$out"
           '';
 
+          ellm-core-tests = pkgs.runCommand "consortium-ellm-core-tests" {
+            nativeBuildInputs = [ pkgs.emacs-nox ];
+          } ''
+            export HOME="$TMPDIR/home"
+            mkdir -p "$HOME"
+            emacs -Q --batch \
+              -L ${self}/emacs \
+              -l ${self}/test/ellm_tests.el \
+              -f ert-run-tests-batch-and-exit
+            touch "$out"
+          '';
+
           emacs-client-tests = pkgs.runCommand "consortium-emacs-client-tests" {
             nativeBuildInputs = [ pkgs.emacs-nox consortium ];
           } ''

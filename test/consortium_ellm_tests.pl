@@ -97,7 +97,7 @@ test(tool_registry_resolves_requested_tool_through_trusted_manifest) :-
     setup_call_cleanup(
         true,
         ( rlm_tool:tool_discover(Registry, Schemas),
-          assertion(member(Schema, Schemas)),
+          member(Schema, Schemas),
           assertion(Schema.name == fixture_read),
           assertion(Schema.capability == tool(fixture_read))
         ),

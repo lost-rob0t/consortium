@@ -162,8 +162,8 @@ The remaining FORMS are the tool implementation body."
   "Convert symbol-keyed alist ARGUMENTS to a keyword plist."
   (let (result)
     (dolist (entry arguments (nreverse result))
-      (push (cdr entry) result)
-      (push (intern (concat ":" (symbol-name (car entry)))) result))))
+      (push (intern (concat ":" (symbol-name (car entry)))) result)
+      (push (cdr entry) result))))
 
 (defun ellm--signal-tool-error (kind tool &optional message data)
   "Signal structured tool error KIND for TOOL."

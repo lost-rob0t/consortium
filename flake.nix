@@ -111,6 +111,7 @@
               -l ${self}/test/ellm_tests.el \
               -l ${self}/test/ellm_tool_tests.el \
               -l ${self}/test/ellm_gptel_tests.el \
+              -l ${self}/test/ellm_consortium_tests.el \
               -f ert-run-tests-batch-and-exit
             touch "$out"
           '';

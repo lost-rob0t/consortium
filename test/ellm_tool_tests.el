@@ -61,6 +61,20 @@
     (should (= (ellm-request-input request) 8))
     (should (= (ellm-conversation-input conversation) 8))))
 
+
+(ert-deftest ellm-tool-supports-multiple-common-lisp-keyword-args ()
+  (ellm-tool-test--reset)
+  (ellm-def-tool pair (input &key left right)
+    :effect 'pure
+    (list input left right))
+  (should
+   (equal
+    (ellm-call-tool
+     'pair
+     '((left . "L") (right . "R"))
+     "current")
+    '("current" "L" "R"))))
+
 (ert-deftest ellm-effectful-tool-refuses-local-execution-without-bridge ()
   (ellm-tool-test--reset)
   (ellm-def-tool write-file (input &key path)

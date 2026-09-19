@@ -76,6 +76,44 @@ Tests use deterministic =fake(...)= workers. Trusted embedding code may select
 model descriptors remain Consortium configuration in =consortium.toml= or the
 run's =models(...)= option.
 
+* ELLM Emacs API
+
+ELLM is the provider-neutral Elisp conversation layer shipped with Consortium.
+It keeps actors and conversation history as explicit Lisp data and delegates
+provider I/O to registered backend adapters.  It does not replace the
+Consortium/Prolog-RLM control plane.
+
+#+begin_src emacs-lisp
+(require 'ellm)
+
+(ellm-defactor researcher
+  :backend 'gptel
+  :model "openrouter/glm-5.3-flash"
+  :skills '(simple-output)
+  :tools '(output-org-tree))
+
+(let* ((request
+        (ellm-ask
+         'researcher
+         "Explain the current input."
+         :input '((document . "example"))
+         :cache '(system tools messages)
+         :callback
+         (lambda (result error _request)
+           (if error
+               (message "ELLM failed: %S" error)
+             (message "ELLM: %S" result)))))
+       (conversation (ellm-request-conversation request)))
+  ;; Later turns reuse only this explicit conversation object.
+  (ellm-reply conversation "Continue."))
+#+end_src
+
+Backends implement a small async contract with =ellm-register-backend=.  Core
+ELLM has no provider HTTP implementation and loads without gptel, Org-roam, or
+other optional integrations.  Prompt-library adapters, gptel prompt-cache
+mapping, LLM-callable tools, and the Prolog-RLM mesh bridge are tracked as
+separate ELLM slices.
+
 * Prolog-RLM runtime boundary
 
 Consortium deliberately depends on Prolog-RLM rather than reimplementing its

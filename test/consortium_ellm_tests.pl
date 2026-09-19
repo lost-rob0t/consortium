@@ -69,7 +69,7 @@ test(protocol_compiles_ellm_worker_to_completion_and_capabilities) :-
             tools:["fixture_read"]
         },
         Options),
-    once(member(worker(completion(CompletionOptions)), Options)),
+    once(member(worker(ellm(CompletionOptions)), Options)),
     assertion(memberchk(explicit_skills(['simple-output']), CompletionOptions)),
     assertion(memberchk(ellm_tools([fixture_read]), CompletionOptions)),
     once(member(capabilities(Capabilities), Options)),
@@ -91,7 +91,7 @@ test(protocol_rejects_non_list_ellm_tools,
         _).
 
 test(tool_registry_resolves_requested_tool_through_trusted_manifest) :-
-    consortium_models:completion_tool_registry(
+    consortium_models:ellm_tool_registry(
         [fixture_read],
         Registry),
     setup_call_cleanup(
@@ -105,7 +105,7 @@ test(tool_registry_resolves_requested_tool_through_trusted_manifest) :-
 
 test(tool_registry_rejects_unknown_requested_tool,
      [throws(error(consortium_error(unknown_ellm_tool(missing_tool)), _))]) :-
-    consortium_models:completion_tool_registry(
+    consortium_models:ellm_tool_registry(
         [missing_tool],
         _).
 

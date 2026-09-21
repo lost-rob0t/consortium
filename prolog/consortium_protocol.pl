@@ -9,6 +9,7 @@
 :- use_module(library(readutil)).
 :- use_module(library(rlm_chain), [openrouter_provider/2]).
 :- use_module(consortium_agent).
+:- use_module(consortium_desktop_status).
 
 :- dynamic protocol_output_queue/1.
 :- dynamic protocol_harness/1.
@@ -34,6 +35,7 @@ daemon(Args) :-
     retractall(protocol_output_queue(_)),
     retractall(protocol_subscribed(_)),
     asserta(protocol_subscribed(true)),
+    catch(desktop_status_reset, _, true),
     message_queue_create(OutputQueue),
     asserta(protocol_output_queue(OutputQueue)),
     thread_create(consortium_protocol:protocol_writer_loop(OutputQueue),
@@ -58,7 +60,8 @@ protocol_writer_loop(Queue) :-
     thread_get_message(Queue, Item),
     (   Item == stop
     ->  true
-    ;   (   protocol_output_item(Item, Message)
+    ;   catch(desktop_status_event(Item), _, true),
+        (   protocol_output_item(Item, Message)
         ->  (   catch(write_protocol_now(Message), _, fail)
             ->  protocol_writer_loop(Queue)
             ;   true

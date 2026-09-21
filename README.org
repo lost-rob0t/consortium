@@ -60,6 +60,14 @@ Protocol requests have ={id, method, params}= and responses carry the same
 methods are =start=, =status=, =events=, =artifact=, =cancel=, =subscribe=,
 =unsubscribe=, and =shutdown=.
 
+For desktop observers, the daemon also projects a bounded, atomic status snapshot
+to =$XDG_STATE_HOME/consortium/qtile-status.json=. Set
+=CONSORTIUM_QTILE_STATUS_FILE= to override the path. This projection contains
+only run identity, sequence, state, phase, worker, event type, and timestamp for
+the 16 most recently updated runs; it never contains prompts, artifacts,
+credentials, or model transcripts. It is an observer surface, not a second
+workflow authority.
+
 Every phase receives a fresh session ID and one explicit packet. Consortium
 submits the phase through Prolog-RLM's canonical async runtime and receives an
 opaque Future; it does not own a scheduler or thread pool. Direct provider

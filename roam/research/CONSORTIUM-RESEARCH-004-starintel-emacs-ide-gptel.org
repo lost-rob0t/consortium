@@ -1,0 +1,248 @@
+#+title: CONSORTIUM-RESEARCH-004 StarIntel IDE: starintel-emacs on gptel, the LEM track, and monorepo relocation
+#+date: 2026-09-20
+#+status: proposed
+#+head: 6dfb05e
+#+supersedes: none
+#+extends: CONSORTIUM-RESEARCH-003
+
+* Question
+
+How should a full StarIntel IDE be realized in Emacs — =starintel-emacs= —
+with agentic AI built on gptel, what role does Consortium play as the
+workflow/authority backend, how does a LEM-based Common Lisp IDE track relate
+to it, and what does relocating Consortium into the =starintel= monorepo
+entail?
+
+Operator intent (2026-09-20, chat): "Make a StarIntel-IDE in emacs and LEM
+clone repo to this mono repo and bootstrap starintel-emacs into a full
+starintel ide and agentic ai with gptel"; then "work on consortium", "move it
+to this repo", "just make auto research on this topic first".
+
+* Baseline (local evidence)
+
+- Consortium HEAD =6dfb05e= at =~/Documents/Projects/consortium=, remote
+  =git@github.com:lost-rob0t/consortium.git=. Branch =main=.
+- Emacs layer is untracked and partially red (RESEARCH-003):
+  =emacs/consortium-rlm-client.el= (prolog_agent_ui_v1 codec/reducer, 551
+  lines), =emacs/consortium-rlm-process.el= (NDJSON pipe transport, 147
+  lines), =test/consortium-rlm-tests.el= (35 ERT, 11 pass / 24 red).
+  Overlapping older =emacs/consortium.el= (290-line async JSONL client).
+- Daemon protocol surface (prolog/consortium_protocol.pl:153-178): =start=,
+  =status=, =events=, =artifact=, =cancel=, =subscribe=, =unsubscribe=,
+  =shutdown=. No plan-submission method yet.
+- =starintel= workspace root =/home/unseen/starintel= is *not a git repo*; it
+  is a workspace of independent repos (star-lang, starintel-doc, spec/,
+  starintel-gpt-auto-dig, quasar, RAGE/, ...). "Move it to this repo"
+  therefore means: place the consortium checkout as a sibling repo at
+  =starintel/consortium= — there is no superproject to submodule into.
+- StarIntel spec authority (resolved 2026-09-19 from canonical tooling, .prolog
+  facts.kb): release 0.9.1, base schema 0.9.0 (immutable), canonical
+  =lost-rob0t/starintel-gpt-auto-dig= @ =6479c0a9= (lock) with consumer pin
+  =ff814ff6=. Any starintel-emacs consumer lock must be repinned through the
+  sync workflow — never hand-edited, never inferred from filenames.
+- User's Doom config already carries gptel
+  (=~/.doom.d/autoload/llm.el=, =packages.org=, a =gptel-make-tool= snippet).
+
+* External evidence (Brave, 2026-09-20)
+
+** gptel (gptel.org, NonGNU-devel ELPA, accessed 2026-09-20)
+
+- Async, streaming LLM client for Emacs; many providers plus any
+  OpenAI-compatible endpoint; responses in Org/Markdown.
+- *Tool use*: =gptel-make-tool= defines Elisp tools; results are fed back to
+  the model — the documented agentic loop.
+- *MCP*: client integration via =mcp.el= (lizqwerscott/mcp.el).
+- *Presets*: bundle model/backend/system message/tools as a named preset,
+  applyable from the transient menu or via =@preset-name= cookies.
+- *Programmatic API*: =gptel-request= and =gptel-fsm= for custom flows.
+- *Org integration*: =gptel-org-set-properties= (per-heading reproducible
+  settings), =gptel-org-branching-context= (outline path = conversation
+  branch), =gptel-org-set-topic=.
+- Context management: buffers/regions/files/dirs via =gptel-add=.
+
+** Agentic ecosystem on gptel (r/emacs "State of agentic coding in Emacs,
+2026", 2026-07-15)
+
+- Community consensus: the gptel ecosystem is the primary 100%-Elisp agentic
+  stack; =gptel-agent= is a ready-made agent harness built on gptel presets
+  and tools; =macher= + =macher-agent= add loops/continuations/parallel
+  subagents on top of gptel.
+- Non-gptel alternatives are external-CLI-bound (ACP =agent-shell=,
+  =claude-code-ide.el= via Claude Code SDK/MCP) — architecturally opposed to
+  Consortium's "model output is data, not authority" model; they embed a
+  foreign agent runtime.
+
+** LEM (lem-project, CL Cookbook; accessed 2026-09-20)
+
+- =lem-project/lem=: general-purpose editor/IDE in Common Lisp, MIT, ~3k
+  stars, actively maintained (repo updated Sep 2026).
+- Frontends: ncurses/TUI, SDL2 (deprecated), webview; "Rooms" cloud product.
+- Built-in LSP client (Python, Go, Rust, JS, ...), directory mode, vi layer,
+  git mode, interactive extension in Common Lisp; sibling projects:
+  =micros= (micro slime/swank), =async-process=, =webview=,
+  =lem-extension-manager=.
+- CL Cookbook: Lem is "tailored for Common Lisp development", swank-based
+  REPL like SLIME — i.e., it can host and develop a running CL image.
+
+* Mapping: gptel ↔ Consortium boundary
+
+Consortium AGENTS.md: "Keep provider-specific behavior, UI concerns, and
+concrete coding-agent tools outside the core workflow semantics." gptel is
+exactly a provider/UI concern → it belongs at the Emacs edge; Consortium core
+never depends on it.
+
+| IDE capability                     | Substrate                                                              |
+|------------------------------------+------------------------------------------------------------------------|
+| Chat / rewrite / ad-hoc questions  | gptel directly (no workflow authority, no effects beyond its own tools) |
+| ADARD/RAGE runs, phases, budgets   | Consortium daemon (only admitted executor); gptel *proxies* to it      |
+| Fresh-context phase workers        | Consortium =start= packets; gptel supplies provider transport upstream of Prolog-RLM or is bypassed by =rlm(Provider,...)= |
+| IDE tools (edit buffer, search, eval) | Elisp functions exposed as gptel tools that wrap *admitted* Consortium effects; direct-mutation tools only in non-workflow chats |
+| Research artifacts (Org)           | =roam/research= convention + gptel-org properties for reproducibility   |
+| Approvals / questions              | =approval_required= / =question_required= events surfaced in Emacs UI (consortium-rlm-client reducer already models them) |
+| StarIntel documents/spec           | starintel-emacs tool over local JSONL corpus + lock-resolved schema (0.9.1) |
+
+Key tension: gptel's built-in agent loop (tools fed back to the model) is
+itself an agent runtime. Consortium forbids a second unrestricted runtime
+inside a workflow. Resolution: two modes, explicitly separated —
+(1) *workflow mode*: gptel tools are thin proxies to daemon methods
+(=start/status/events/artifact/cancel=); the model proposes, Prolog decides;
+(2) *free mode*: plain gptel chats with local tools, no run lineage, no
+authority claims. The mode is a preset attribute, never inferred.
+
+* Repository relocation (consortium → starintel monorepo)
+
+- Move: =mv ~/Documents/Projects/consortium /home/unseen/starintel/consortium=
+  (a clone/move of a self-contained repo; the workspace root is not a
+  superproject, so no submodule bookkeeping is needed or possible).
+- Remote policy (user global): forgejo at =git.starintel.actor= is origin;
+  GitHub =lost-rob0t/consortium= becomes fallback/mirror. Use =tea= for
+  forgejo repo creation. Open question: target org on the forge
+  (=lost-rob0t= vs =starintel-labs=) — recorded below as unknown.
+- Untracked work travels with the checkout (emacs/ client, tests, tools/,
+  roam research, .prolog/) — no history rewrite needed.
+- After relocation, update README Layout section and any absolute paths in
+  .prolog state.
+
+* LEM track decision
+
+| Option | Description | Cost / risk | Synergy |
+|--------+-------------+-------------+---------|
+| A: vendor clone | Clone =lem-project/lem= into =starintel/lem= as an upstream-tracking tree (no local commits); starintel code lives beside it as a lem extension | Low; =git pull= upstream | LEM extensible in CL; star-lang/Prolog-RLM CL adapter (upstream =eba3f90=, =lisp/bridge.lisp=) can load rlm in-process |
+| B: full fork | Clone with local commits, maintain a StarIntel fork | High: ~3k-star editor, active upstream, divergence tax compounds | Same, but every upstream fix is a merge |
+| C: flake input | Lem as a nix flake input; no tree in the monorepo | Lowest | No in-tree hackability; does not satisfy the literal "clone repo to this mono repo" ask |
+| D: none | Emacs-only IDE | Zero | Loses the CL-native track entirely |
+
+Recommendation: *A*. It satisfies the operator's literal ask (a LEM clone
+repo in the monorepo) without committing to fork maintenance (B). The
+StarIntel-specific CL code goes in a separate =starintel-lem-ext= (or inside
+starintel-emacs's CL dir) loaded via lem's extension mechanism at runtime —
+never as commits inside =lem/= itself. The in-process synergy is real:
+Consortium's Prolog-RLM boundary already has a CL bridge upstream, so a LEM
+image could run ADARD phases without shelling out — but that is a later
+slice, gated on the Emacs track proving the workflow model.
+
+* starintel-emacs bootstrap slices (bounded)
+
+1. *Relocate* consortium into =starintel/consortium=; retarget remotes
+   (forgejo origin, GitHub mirror); relocate =starintel/lem= vendor clone
+   (option A).
+2. *Consolidate the Emacs substrate* (RESEARCH-003 slice 2): one client,
+   green ERT suite (triage the 24 red tests: reducer/validate =:error=
+   mismatch).
+3. *starintel-emacs package skeleton*: new repo =starintel/starintel-emacs=
+   (flake.nix + elnix-style devshell; ELPA deps: gptel, mcp.el, org-roam;
+   GPL-2.0-or-later to match consortium); re-export the consolidated
+   consortium client/transport from consortium as its dependency.
+4. *gptel presets for ADARD phases*: one preset per phase
+   (analyze/design/adversarial_review/resolve/develop/verify) carrying phase
+   system directives + the mode attribute (workflow vs free) + toolsets.
+5. *Consortium gptel tools*: =gptel-make-tool= wrappers over daemon methods
+   (start/status/events/artifact/cancel) — the only workflow-mode tools;
+   approval/question events surface through the existing reducer event types.
+6. *StarIntel tooling*: corpus search over local JSONL (starintel-local-search
+   conventions), document creation through the lock-resolved schema (release
+   0.9.1 via the sync workflow, never a hardcoded version), auto-dig entry
+   points.
+7. *LEM extension* (later): load =starintel-lem-ext= into the vendored lem;
+   in-process CL bridge experiment.
+
+* Verified facts
+
+1. gptel supports Elisp tool calling, MCP via mcp.el, presets, and a
+   programmatic API (=gptel-request=, =gptel-fsm=) — sufficient surface for
+   both the proxy-tools design and phase presets. (gptel.org, ELPA page)
+2. gptel-agent / macher-agent prove the gptel-only agentic pattern works in
+   practice without foreign CLI runtimes. (r/emacs 2026-07-15)
+3. LEM is actively maintained, MIT, extensible in CL, with a supported
+   extension manager — a vendor-clone + extension layout is supported by the
+   project's own packaging. (lem-project GitHub, CL Cookbook)
+4. The monorepo root is not a git repository; relocation is a plain
+   directory move of a self-contained repo. (local inspection 2026-09-20)
+5. The consortium Emacs client already models approvals/questions/tool
+   events (consortium-rlm-client.el =known-event-types=), which is exactly
+   the surface gptel proxy tools need. (file inspection)
+6. The user's Emacs already runs gptel (doom config evidence). (local
+   inspection)
+
+* Contradictions
+
+- gptel's tool loop is an agent runtime; Consortium forbids a second
+  unrestricted runtime in workflows. Resolution above (two explicit modes);
+  the design phase must specify what happens when a free-mode chat touches
+  workflow state (answer: it cannot — no daemon credentials/effects).
+- Three Emacs clients would then exist (=consortium.el=,
+  =consortium-rlm-client.el=, gptel UI). Slice 2 must collapse the first
+  two before slice 3 builds on gptel; gptel is UI/transport, not a third
+  client.
+- LEM option B (fork) contradicts upstream-velocity reality; option A
+  contradicts the user's word "clone" only superficially — a vendor clone is
+  still a clone; the resolve gate should confirm A vs B explicitly.
+- Operator asked to "git pull all mains" first; that sweep was aborted and
+  deferred — relocations and pulls must be sequenced after this research is
+  approved to avoid moving a tree mid-pull.
+
+* Unknowns
+
+- Root cause of the 24 red ERTs (from RESEARCH-003, unresolved) — blocks
+  slice 2.
+- Whether =prolog_agent_ui_v1= needs a plan-submit method for ELLM/phase
+  presets (from RESEARCH-003, unresolved) — blocks slice 5's richer flows.
+- Target forgejo org/path for consortium on =git.starintel.actor=
+  (=lost-rob0t/consortium= vs =starintel-labs/consortium=).
+- Whether lem-extension-manager supports out-of-tree extension repos with
+  declarative pinning (needs a probe against the vendored tree).
+- gptel preset fidelity for phase packets (system message + tools + model)
+  vs the immutable-packet invariant — design must map preset fields to
+  packet fields explicitly.
+
+* Constraints
+
+- ADADR gates: RESEARCH-003 approval is still an open human gate; this
+  research extends it and shares its gate. Design cannot begin until the
+  user approves.
+- No provider-specific orchestration in Consortium core; gptel stays in the
+  Emacs layer and in starintel-emacs.
+- GPL-2.0-or-later; no secrets, hidden prompts, or raw transcripts in Git.
+- Bounded packets: any buffer/org-roam context sent through gptel into a
+  workflow phase needs explicit bounding/truncation policy (RESEARCH-003
+  constraint, inherited).
+- StarIntel schema work in starintel-emacs resolves versions only through
+  =schema/starintel-schema.lock.json= and the canonical release tooling —
+  never from memory or filenames.
+
+* Bounded problem statement
+
+Deliver, in order: (1) consortium relocated to =starintel/consortium= with
+forgejo origin and GitHub mirror; (2) =starintel/lem= vendor clone (option
+A, no local commits); (3) consolidated green Emacs client inside consortium
+(slice 2 of RESEARCH-003); (4) =starintel/starintel-emacs= package with gptel
+phase presets and daemon-proxy tools in workflow mode; (5) StarIntel corpus/
+schema tools; LEM extension deferred behind its own gate.
+
+* Follow-on work
+
+- Human gate: approve RESEARCH-003 + RESEARCH-004 (one decision).
+- Design doc: =roam/design/= for the starintel-emacs package + mode split.
+- Probe: lem-extension-manager out-of-tree support; gptel preset ↔ packet
+  mapping table.
+- Deferred: in-process LEM+Prolog-RLM CL bridge experiment.

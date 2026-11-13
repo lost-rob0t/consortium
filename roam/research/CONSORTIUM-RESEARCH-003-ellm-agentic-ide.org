@@ -1,0 +1,123 @@
+#+title: CONSORTIUM-RESEARCH-003 ELLM and the Consortium Emacs IDE package
+#+date: 2026-09-19
+#+status: proposed
+#+head: 6dfb05e
+
+* Question
+
+How should ELLM — a Lisp-native, first-class LLM API for Emacs with symbolic
+Org/Roam context, independent skills/tools switches, compiled multi-turn
+programs, and graph-native state — be realized on top of Consortium and the
+latest Prolog-RLM main, as the core feature of a real agentic IDE package?
+
+* Baseline
+
+- Consortium HEAD =6dfb05e=. Pinned Prolog-RLM =e1ed6c2= (flake.nix:8).
+- Upstream Prolog-RLM main is =eba3f90=: 45 files, +5880/-34 since the pin.
+- The Emacs layer is partially implemented and untracked:
+  =emacs/consortium-rlm-client.el= (prolog_agent_ui_v1 codec/reducer, 551
+  lines), =emacs/consortium-rlm-process.el= (NDJSON pipe transport, 147
+  lines), =test/consortium-rlm-tests.el= (35 ERT tests), plus an older
+  =emacs/consortium.el= (290-line async JSONL client) that overlaps with the
+  new client.
+- ERT status: 11/35 pass, 24 fail. Example: =consortium-rlm-approval-lifecycle=
+  fails because =consortium-rlm-client-validate= outcomes do not carry the
+  =:error= plist the tests assert. The reducer/test contract is WIP-red.
+- Daemon protocol surface (prolog/consortium_protocol.pl:153-178): =start=,
+  =status=, =events=, =artifact=, =cancel=, =subscribe=, =unsubscribe=,
+  =shutdown=.
+
+* Upstream evidence (e1ed6c2..eba3f90)
+
+Additions directly relevant to ELLM:
+
+- *Common Lisp adapter* (=lisp/bridge.lisp=,
+  =prolog/adaptors/rlm_common_lisp_bridge.pl=): a process-boundary client.
+  It starts a long-lived SWI child running a bridge that accepts framed
+  requests and only permits calls to predicates exported from loaded modules
+  named =rlm= or =rlm_*=. Conjunctions, module-qualified goals, and arbitrary
+  system predicates are rejected. Returned Prolog values are opaque
+  =prolog-term= handles reusable in later calls.
+- *Symbolic tool harness* (=prolog/rlm_symbolic_tool.pl=): a closed
+  expression language compiled/interpreted as ordinary read-only RLM tools.
+  "The program is data... interpreted by a code-owned Prolog handler and is
+  never meta-called."
+- *Typed completion plans* (=rlm_completion=): context mounts,
+  =explicit_skills= / =disabled_skills= selection, planner-driven multi-step
+  plans, =rlm(Provider, Name)= and =completion(Options)= execution forms.
+- *Project semantic knowledge* (=rlm_project_semantic*.pl, ~1900 lines) and
+  *ZARA-RUNTIME/1* sidecar bridge; provenance and request-id hardening.
+
+The CL adapter is evidence for the bridge architecture, not the ELLM
+implementation: ELLM targets Elisp (ob-ellm, org-roam, Emacs buffers), but the
+authority pattern — Lisp submits data, Prolog owns interpretation — transfers.
+
+* Mapping ELLM onto the existing boundary
+
+| ELLM concept | Consortium/Prolog-RLM realization |
+|---|---|
+| Model as first-class value | Role→model descriptors (consortium.toml / =models(...)=) resolved to =rlm(Provider, Name)= or =completion(Options)= values |
+| =(tool model &rest inputs)= | Mint a *narrowed capability* via =rlm_tool:capabilities_narrow/3=; availability ≠ permission |
+| Skills switch, tools switch (separate) | =explicit_skills= / =disabled_skills= plan options + tool capability narrowing; two independent axes |
+| ELLM compiler | Compile Elisp program AST to a typed plan / symbolic program (data); Prolog owns execution; never meta-call model output |
+| Multi-turn chaining | Plan-graph execution + artifacts; results cross turns as immutable artifact references, not transcript replay |
+| Symbolic context (=org-roam-dir roam=, current buffer, dotfiles) | =ob-ellm= resolves symbols Emacs-side into *bounded packet content*; upstream context mounts/ =acquire_context/3= are the runtime side |
+| Graph-native | Prolog facts + artifact store lineage + upstream project-semantic knowledge; ELLM program/call/output become queryable terms |
+| Org tree generation | Output projection concern of =ob-ellm=; deterministic Emacs-side transform of artifact content |
+
+* Verified facts
+
+1. The Emacs client exists but is red: 24/35 ERT failures from a
+   reducer/validate outcome mismatch (e.g., test line 222 asserts =:error= on
+   a validated snapshot that does not carry it).
+2. The daemon has run control but no plan-submission method; ELLM compiled
+   programs need either a new admitted method or the =start= params extended
+   with a plan artifact.
+3. Upstream main exports the whole contract surface the current contract
+   tests lock (=rlm_async=, =rlm_chain=, =rlm_completion=, =rlm_tool=,
+   =rlm_artifact= symbols in test/prolog_rlm_contract_tests.pl).
+4. The skills/tools independence ELLM requires already exists upstream at the
+   plan level; Consortium must only project it through protocol + Emacs.
+
+* Contradictions
+
+- Two Emacs clients (consortium.el vs consortium-rlm-client.el) overlap; the
+  IDE package needs one substrate.
+- ELLM multi-turn chaining in one Emacs process naturally accumulates model
+  context; Consortium's invariant forbids silent transcript replay across
+  phases. Compiled chaining must pass artifact references, and the design
+  must say what happens when a user program explicitly wants prior text.
+
+* Unknowns
+
+- Whether =prolog_agent_ui_v1= carries everything ELLM runs need or ELLM
+  requires new protocol methods (plan submit, structured bindings).
+- Root cause of the 24 red ERTs (reducer bug, test bug, or upstream shape
+  change at a89175b) — must be triaged before building on the client.
+- Contract-suite pass against =eba3f90= (not yet run; verification gate for
+  the rebase slice).
+
+* Constraints
+
+- ADADR gates: this research must be approved before design; design approved
+  before implementation.
+- No provider-specific orchestration in core; Prolog owns transitions,
+  budgets, capabilities, lineage.
+- Bounded packets: current-buffer/org-roam context needs explicit
+  bounding/truncation policy.
+- GPL-2.0-or-later; no secrets, hidden prompts, or raw transcripts in Git.
+
+* Bounded problem statement
+
+Deliver a Consortium Emacs package slice where: (1) Prolog-RLM is repinned to
+main =eba3f90= with the ABI contract suite green; (2) the Emacs client is
+consolidated to one green-test substrate; (3) ELLM ships as an Elisp front-end
+that compiles programs into admitted plan data executed by the Prolog side,
+with independent skills/tools switches and symbolic bounded context; (4)
+results are projected back as artifacts and Org trees.
+
+* Follow-on work
+
+- ob-ellm Org Babel backend with symbolic context variables.
+- IDE UX: run/inspect/approve dashboards on prolog_agent_ui_v1 events.
+- Graph-native run browser backed by artifacts + Prolog facts.

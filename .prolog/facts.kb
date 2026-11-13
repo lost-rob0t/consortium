@@ -1,0 +1,4 @@
+% Ground task/control facts for this worktree. Machine observations live in runs/run-<HEAD>.pl.
+task('consortium-emacs-ide').
+repo_state('6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb', 'b2909e8a863ce61a19306b63a10752dfe35585478c88ab22554a57d00fe90fe8').
+research_required(false).

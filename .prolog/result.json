@@ -1,0 +1,14 @@
+{
+  "checked_at": "2026-09-20T23:53:07Z",
+  "facts_sha256": "73e9815e677211902b7e67fc40b17d98e600d792e1d06c4420952ee114b7d589",
+  "head": "6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb",
+  "reason": "verification passed",
+  "run_file": "run-6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb.pl",
+  "run_sha256": "8f317600915a8017e003723c1b2c0e4e0ec7611f2a36e821a7063f33c088b022",
+  "status": "pass",
+  "stderr_sha256": "7f317feceb76943ad93279f4596562a2383a211980129c2850da34792799baa4",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "swipl_exit": 0,
+  "verify_sha256": "452c480229527acfed72d69f4884f3e26b233211af846d42754f2a8f7e8eca99",
+  "worktree_digest": "b2909e8a863ce61a19306b63a10752dfe35585478c88ab22554a57d00fe90fe8"
+}

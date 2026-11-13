@@ -2,6 +2,7 @@
           [ default_models/1,
             role_model/3,
             run_phase_async/4,
+            run_phase_async/5,
             model_handler/4
           ]).
 
@@ -29,6 +30,9 @@ role_model(_, Role, _) :-
                         'every ADARD role requires explicit model routing'))).
 
 run_phase_async(Packet, Worker, Budget, Future) :-
+    run_phase_async(Packet, Worker, Budget, none, Future).
+
+run_phase_async(Packet, Worker, Budget, _Skills, Future) :-
     fake_worker(Worker),
     !,
     require_model_capability(Packet.capabilities, fake),
@@ -42,7 +46,7 @@ run_phase_async(Packet, Worker, Budget, Future) :-
                 planner_max_tokens(Budget.max_total_tokens)
               ],
     llm_query_async(Prompt, Options, Future).
-run_phase_async(Packet, rlm(Provider, ProviderName), Budget, Future) :-
+run_phase_async(Packet, rlm(Provider, ProviderName), Budget, _Skills, Future) :-
     !,
     require_model_capability(Packet.capabilities, ProviderName),
     packet_prompt(Packet, Prompt),
@@ -63,24 +67,33 @@ run_phase_async(Packet, rlm(Provider, ProviderName), Budget, Future) :-
                 session_id(Packet.session_id)
               ],
     chain_invoke_async(Provider, Request, Options, Future).
-run_phase_async(Packet, rlm, Budget, Future) :-
+run_phase_async(Packet, rlm, Budget, Skills, Future) :-
     !,
     route_provider(Packet.model, Provider, ProviderName),
-    run_phase_async(Packet, rlm(Provider, ProviderName), Budget, Future).
-run_phase_async(Packet, completion(CompletionOptions), Budget, Future) :-
+    run_phase_async(Packet, rlm(Provider, ProviderName), Budget, Skills, Future).
+run_phase_async(Packet, completion(CompletionOptions), Budget, Skills, Future) :-
     !,
     packet_prompt(Packet, Prompt),
     exclude(runtime_owned_completion_option,
             CompletionOptions,
             NarrowedOptions),
+    completion_skill_options(Skills, SkillOptions),
     Options = [ budget(Budget),
                 trace_id(Packet.run_id),
                 session_id(Packet.session_id),
                 capabilities(Packet.capabilities),
                 child_capabilities(Packet.capabilities)
-              |NarrowedOptions],
-    rlm_completion_async(Prompt, text(""), Options, Future).
-run_phase_async(Packet, Worker, Budget, Future) :-
+              |SkillOptions],
+    append(Options, NarrowedOptions, AllOptions),
+    rlm_completion_async(Prompt, text(""), AllOptions, Future).
+
+% Skill catalogs are loaded per run in consortium_agent and handed to
+% completion workers here; Prolog-RLM's skill layer owns selection,
+% prompt-unit compilation and resource confinement.
+completion_skill_options(none, []) :- !.
+completion_skill_options(Catalog, [skill_catalog(Catalog)]).
+
+run_phase_async(Packet, Worker, Budget, _Skills, Future) :-
     packet_prompt(Packet, Prompt),
     Handler = consortium_models:model_handler(Worker, Packet),
     Options = [ model_handler(Handler),

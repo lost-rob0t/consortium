@@ -46,4 +46,24 @@ assert set(config["models"]) == {
     "resolve",
     "develop",
     "verify",
+    "codex",
 }
+
+# The default route is z.ai via OpenRouter; the codex sub-table documents
+# the OpenAI-compatible alternative. Neither carries secrets.
+assert config["models"]["provider"] == "openrouter"
+codex = config["models"]["codex"]
+assert codex["provider"] == "codex"
+assert codex["credential-env"] == "OPENAI_API_KEY"
+assert codex["endpoint"].startswith("https://")
+for role in (
+    "root-agent",
+    "analyze",
+    "design",
+    "adversarial_review",
+    "resolve",
+    "develop",
+    "verify",
+):
+    assert isinstance(config["models"][role], str) and config["models"][role]
+    assert isinstance(codex[role], str) and codex[role]

@@ -119,6 +119,68 @@ test(valid_json_with_invalid_params_returns_error_and_stays_alive) :-
         ),
         stop_daemon(Input, Output, Error, Pid)).
 
+test(codex_provider_admits_then_fails_cleanly_without_credentials) :-
+    start_daemon(Input, Output, Error, Pid),
+    setup_call_cleanup(
+        true,
+        ( send_request(Input,
+                       _{id:1,
+                         method:"start",
+                         params:_{task:"codex provider wiring",
+                                  options:_{worker:"rlm",
+                                            provider:"codex",
+                                            credential_env:"CONSORTIUM_TEST_MISSING_SECRET",
+                                            models:_{root_agent:"codex-test-model",
+                                                     analyze:"codex-test-model",
+                                                     design:"codex-test-model",
+                                                     adversarial_review:"codex-test-model",
+                                                     resolve:"codex-test-model",
+                                                     develop:"codex-test-model",
+                                                     verify:"codex-test-model"}}}}),
+          read_response(Output, 1, [], StartResponse, StartMessages),
+          assertion(StartResponse.ok == true),
+          RunId = StartResponse.result.run_id,
+          assertion(string(RunId)),
+          protocol_wait_terminal(Input, Output, 2, RunId, "failed", _),
+          send_request(Input, _{id:9, method:"shutdown", params:_{}}),
+          read_response(Output, 9, StartMessages, Shutdown, _),
+          assertion(Shutdown.ok == true)
+        ),
+        stop_daemon(Input, Output, Error, Pid)).
+
+test(unsupported_provider_is_rejected_and_daemon_survives) :-
+    start_daemon(Input, Output, Error, Pid),
+    setup_call_cleanup(
+        true,
+        ( send_request(Input,
+                       _{id:1,
+                         method:"start",
+                         params:_{task:"bogus provider",
+                                  options:_{worker:"rlm",
+                                            provider:"bogus",
+                                            models:_{}}}}),
+          read_response(Output, 1, [], Rejected, _),
+          assertion(Rejected.ok == false),
+          send_request(Input,
+                       _{id:2, method:"shutdown", params:_{}}),
+          read_response(Output, 2, [], Shutdown, _),
+          assertion(Shutdown.ok == true)
+        ),
+        stop_daemon(Input, Output, Error, Pid)).
+
+protocol_wait_terminal(Input, Output, Id, RunId, Expected, FinalId) :-
+    send_request(Input, _{id:Id, method:"status", params:_{run_id:RunId}}),
+    read_response(Output, Id, [], StatusResponse, _),
+    (   memberchk(StatusResponse.result.state,
+                  ["complete", "failed", "rejected", "cancelled", "blocked"])
+    ->  assertion(StatusResponse.result.state == Expected),
+        FinalId = Id
+    ;   Id < 100,
+        sleep(0.1),
+        NextId is Id + 1,
+        protocol_wait_terminal(Input, Output, NextId, RunId, Expected, FinalId)
+    ).
+
 test(approval_methods_reject_unknown_ids_and_stay_alive) :-
     start_daemon(Input, Output, Error, Pid),
     setup_call_cleanup(

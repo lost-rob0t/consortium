@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T19:43:02Z",
-  "facts_sha256": "07c577a13952006ab12c207763a1a6194c384d91712e7ea2fee73177f314c1f9",
-  "head": "411b87e86002333486977c6ea2a41fa264a04207",
+  "checked_at": "2026-11-13T19:55:05Z",
+  "facts_sha256": "5c6a7b92d9751ecd07901111278985dfc900b6d8b062b600f7d139701cd2ab91",
+  "head": "a758f2418237d9e8c1184c72265323cde7b1e5e1",
   "reason": "verification passed",
-  "run": "1cbf95800dc04d7db760801a420c941c",
+  "run": "a7f5fd0ae4b0408ebe1727f24aee4ed7",
   "run_file": "evidence.pl",
-  "run_sha256": "1ab179711cedfdb5381076be5c8e40b209720c6fd2a9c3114eb3464d42258469",
+  "run_sha256": "016fd0eb7296a98c72db31856bfad6cce174c69431765e143294a63de058af8f",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "u4-approval-resolve",
+  "task": "providers-zai-codex",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "worktree_digest": "c518a8d21260ce5ac97db24923b8b2834a7a16c42ec17750540d06d70bc12e4a"
 }

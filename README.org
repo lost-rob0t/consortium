@@ -84,6 +84,26 @@ Tests use deterministic =fake(...)= workers. Trusted embedding code may select
 model descriptors remain Consortium configuration in =consortium.toml= or the
 run's =models(...)= option.
 
+* Providers
+
+Two provider paths ship; both resolve secrets from the environment at
+request time, never from configuration or the wire:
+
+- *z.ai via OpenRouter* (default): =OPENROUTER_API_KEY= in the daemon
+  environment, models like =z-ai/glm-4.6=. The emacs layer injects the
+  key from auth-source when the variable is unset.
+- *Codex* (OpenAI-compatible endpoint): per-run options =provider= = =codex=,
+  =endpoint= (default =https://api.openai.com/v1/chat/completions=),
+  =credential_env= naming the environment variable that holds the key
+  (default =OPENAI_API_KEY=), and a full seven-role =models= object.
+  Missing credentials fail the run cleanly before any network egress;
+  unsupported providers are rejected at admission.
+
+Role routes and budgets remain run options; =consortium.toml= documents
+the operator defaults. See =schema/consortium-event.schema.json= for the
+event envelope and =test/consortium_protocol_tests.pl= for the wire
+contract.
+
 * Prolog-RLM runtime boundary
 
 Consortium deliberately depends on Prolog-RLM rather than reimplementing its

@@ -7,7 +7,8 @@
 :- use_module(library(filesex)).
 :- use_module(library(http/json)).
 :- use_module(library(readutil)).
-:- use_module(library(rlm_chain), [openrouter_provider/2]).
+:- use_module(library(rlm_chain), [openrouter_provider/2,
+                                   openai_compatible_provider/4]).
 :- use_module(consortium_agent).
 :- use_module(consortium_desktop_status).
 
@@ -156,7 +157,12 @@ dispatch(Harness, Request, Result, Continue) :-
 dispatch_method("start", Harness, Params, _{run_id:RunId}, true) :-
     ( get_dict(options, Params, OptionDict) -> true ; OptionDict = json{} ),
     protocol_options(OptionDict, Options),
-    start(Harness, Params.task, Options, RunId).
+    (   start(Harness, Params.task, Options, RunId)
+    ->  true
+    ;   throw(error(consortium_error(start_failed),
+                    context(consortium_protocol,
+                            'run admission failed for the supplied options')))
+    ).
 dispatch_method("status", Harness, Params, Status, true) :-
     run_atom(Params.run_id, RunId),
     status(Harness, RunId, Status).
@@ -222,16 +228,92 @@ protocol_ground_pair(Key-Value0, Key-Value) :-
 protocol_execution_options(Dict, Options) :-
     get_dict(worker, Dict, "rlm"),
     !,
-    get_dict(provider, Dict, "openrouter"),
-    get_dict(models, Dict, ModelDict),
+    (   get_dict(provider, Dict, Provider) -> true
+    ;   Provider = "openrouter"
+    ),
+    (   Provider == "openrouter"
+    ->  protocol_openrouter_options(Dict, Options)
+    ;   Provider == "codex"
+    ->  protocol_codex_options(Dict, Options)
+    ;   throw(error(consortium_error(unsupported_provider(Provider)),
+                    context(consortium_protocol,
+                            'supported rlm providers: openrouter, codex')))
+    ).
+protocol_execution_options(Dict, [worker(Worker)]) :-
+    protocol_worker(Dict, Worker).
+
+protocol_openrouter_options(Dict, Options) :-
+    require_models(Dict, ModelDict),
     openrouter_model_routes(ModelDict, Models),
     Options = [ worker(rlm),
                 models(Models),
                 capabilities([model(openrouter)]),
                 phase_capabilities([model(openrouter)])
               ].
-protocol_execution_options(Dict, [worker(Worker)]) :-
-    protocol_worker(Dict, Worker).
+
+% Codex (OpenAI-compatible endpoint). The endpoint and the credential
+% ENVIRONMENT VARIABLE NAME are configuration; the secret itself is
+% resolved by the runtime from the environment at request time and is
+% never accepted over the protocol wire.
+protocol_codex_options(Dict, Options) :-
+    require_models(Dict, ModelDict),
+    (   get_dict(endpoint, Dict, Endpoint0), string(Endpoint0)
+    ->  Endpoint = Endpoint0
+    ;   Endpoint = "https://api.openai.com/v1/chat/completions"
+    ),
+    (   get_dict(credential_env, Dict, CredentialEnv0), string(CredentialEnv0)
+    ->  CredentialEnv = CredentialEnv0
+    ;   CredentialEnv = "OPENAI_API_KEY"
+    ),
+    codex_model_routes(ModelDict, Endpoint, CredentialEnv, Models),
+    Options = [ worker(rlm),
+                models(Models),
+                capabilities([model(openai_compatible)]),
+                phase_capabilities([model(openai_compatible)])
+              ].
+
+require_models(Dict, ModelDict) :-
+    (   get_dict(models, Dict, ModelDict),
+        is_dict(ModelDict),
+        protocol_roles_present(ModelDict)
+    ->  true
+    ;   throw(error(consortium_error(missing_model_routes),
+                    context(consortium_protocol,
+                            'rlm worker requires a models object with all seven phase roles')))
+    ).
+
+protocol_roles_present(ModelDict) :-
+    forall(member(Role, [root_agent, analyze, design, adversarial_review,
+                         resolve, develop, verify]),
+           (   get_dict(Role, ModelDict, Model),
+               string(Model)
+           ->  true
+           ;   throw(error(consortium_error(invalid_model_route(Role)),
+                           context(consortium_protocol,
+                                   'each phase role needs a model string')))
+           )).
+
+codex_model_routes(ModelDict, Endpoint, CredentialEnv, Models) :-
+    is_dict(ModelDict),
+    maplist(codex_role_route(ModelDict, Endpoint, CredentialEnv),
+            [root_agent, analyze, design, adversarial_review,
+             resolve, develop, verify],
+            Routes),
+    Routes = [Root, Analyze, Design, Adversarial, Resolve, Develop, Verify],
+    Models = models{root_agent:Root,
+                    analyze:Analyze,
+                    design:Design,
+                    adversarial_review:Adversarial,
+                    resolve:Resolve,
+                    develop:Develop,
+                    verify:Verify}.
+
+codex_role_route(ModelDict, Endpoint, CredentialEnv, Role, Route) :-
+    get_dict(Role, ModelDict, Model),
+    openai_compatible_provider(Endpoint, env(CredentialEnv), Model, Provider),
+    Route = model_route{provider:Provider,
+                        provider_name:openai_compatible,
+                        model:Model}.
 
 protocol_policy_options(Dict, Options) :-
     findall(Option,

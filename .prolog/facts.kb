@@ -1,7 +1,7 @@
 % Ground task/control facts. Evidence is isolated by task and run.
-task('u4-approval-resolve').
-verification_context('u4-approval-resolve', '1cbf95800dc04d7db760801a420c941c').
-repo_state('411b87e86002333486977c6ea2a41fa264a04207', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855').
+task('providers-zai-codex').
+verification_context('providers-zai-codex', 'a7f5fd0ae4b0408ebe1727f24aee4ed7').
+repo_state('a758f2418237d9e8c1184c72265323cde7b1e5e1', 'c518a8d21260ce5ac97db24923b8b2834a7a16c42ec17750540d06d70bc12e4a').
 research_required(false).
 requirement('plunit-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
 claim('plunit-green', requirement('plunit-green')).

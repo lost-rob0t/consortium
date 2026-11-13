@@ -1,7 +1,7 @@
 % Ground task/control facts. Evidence is isolated by task and run.
-task('consortium-handoff-20261113').
-verification_context('consortium-handoff-20261113', 'f9cf00e4bd6644c7a6537021c6dc2876').
-repo_state('557b8f5512bf7787afdd9582195ae048848016e4', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855').
+task('region-review').
+verification_context('region-review', 'bcffd45f8b284edea9c06d50d877ff3b').
+repo_state('9be6620ca247955410b4a5ed143b9f7f56d93a0e', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855').
 research_required(false).
 requirement('plunit-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
 claim('plunit-green', requirement('plunit-green')).

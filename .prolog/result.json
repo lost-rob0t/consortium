@@ -1,6 +1,16 @@
 {
-  "reason": "requirements changed; check required",
-  "run": "fbfef26cb10147b1aa0be0746b6fe451",
-  "status": "unknown",
-  "task": "region-review"
+  "checked_at": "2026-11-13T20:46:51Z",
+  "facts_sha256": "2332f71b29879972025f4bb53e07fa5d8b9c93082083be4f9c9a42799a2777de",
+  "head": "9be6620ca247955410b4a5ed143b9f7f56d93a0e",
+  "reason": "verification passed",
+  "run": "bcffd45f8b284edea9c06d50d877ff3b",
+  "run_file": "evidence.pl",
+  "run_sha256": "4893a10b2a63d8cee7f9261b51415ab7a4d179a3145e16f3847b790fa7a2d6d9",
+  "status": "pass",
+  "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "swipl_exit": 0,
+  "task": "region-review",
+  "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
+  "worktree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }

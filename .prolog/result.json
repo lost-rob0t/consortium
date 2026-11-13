@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T20:00:24Z",
-  "facts_sha256": "3ade649a902bbd3cc18d238818e39c536723466ac0059f5c2dced9f512be1a21",
-  "head": "7808156493b7a21cef149b99174a0fe6e52be961",
+  "checked_at": "2026-11-13T20:11:30Z",
+  "facts_sha256": "ac46a0a05aaf7770f41d00e308ffe1623cbfdba81b581282da98db6f733326b2",
+  "head": "5b37e9926737f4f92bd3468fecbf4a05ac99d672",
   "reason": "verification passed",
-  "run": "5bb19e6459ec4481be6bf0854be86e08",
+  "run": "69df50bd4c6546fda6f6982ac7d7021f",
   "run_file": "evidence.pl",
-  "run_sha256": "99629bfa3a16018c419d5d1db40a830d04ca0a30f62bf98b5adb1d99ed1e918b",
+  "run_sha256": "f940119da2b211bcc05e937ddd7caa6f3d045658e44c59a84b6acda0aed30f88",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "zai-coding-plan",
+  "task": "rlm-skills",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "26b34360c637aad034337946430c6d3839ce34f973d96e0cd3427ce990f67a22"
+  "worktree_digest": "12b9e9b162ccf117c45ebdd599637aa57a42dadc550d90295363e48ff3a4ee8f"
 }

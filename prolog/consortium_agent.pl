@@ -20,6 +20,7 @@
 :- use_module(library(rlm_artifact)).
 :- use_module(library(rlm_async)).
 :- use_module(library(rlm), [rlm_approve/2, rlm_deny/3]).
+:- use_module(library(rlm_skill), []).
 :- use_module(library(rlm_tool), [capabilities_narrow/3]).
 :- use_module(consortium_adard).
 :- use_module(consortium_models).
@@ -29,6 +30,7 @@
 :- dynamic harness_sink/2.
 :- dynamic run_record/3.
 :- dynamic run_config/3.
+:- dynamic run_skill_catalog/3.
 :- dynamic run_event/4.
 :- dynamic run_artifact/4.
 :- dynamic run_output_ref/3.
@@ -67,6 +69,7 @@ harness_destroy(harness(Id)) :-
     retractall(harness_sink(Id, _)),
     retractall(run_record(Id, _, _)),
     retractall(run_config(Id, _, _)),
+    retractall(run_skill_catalog(Id, _, _)),
     retractall(run_event(Id, _, _, _)),
     retractall(run_artifact(Id, _, _, _)),
     retractall(run_output_ref(Id, _, _)),
@@ -86,6 +89,7 @@ start(Harness, Task0, Options, RunId) :-
                             'task must not be empty')))
     ),
     normalize_run_options(Options, Config),
+    ensure_run_skill_catalog(Config, Catalog),
     validate_start_size(Task, Config),
     uuid(UUID, [version(4)]),
     atom_concat(run_, UUID, RunId),
@@ -107,9 +111,14 @@ start(Harness, Task0, Options, RunId) :-
                  approved_decisions:[],
                  artifacts:[]
              },
+    status_with_skills(Status, Catalog, SkilledStatus),
     with_mutex(consortium_state,
-               ( assertz(run_record(HarnessId, RunId, Status)),
-                 assertz(run_config(HarnessId, RunId, Config))
+               ( assertz(run_record(HarnessId, RunId, SkilledStatus)),
+                 assertz(run_config(HarnessId, RunId, Config)),
+                 (   Catalog == none
+                 ->  true
+                 ;   assertz(run_skill_catalog(HarnessId, RunId, Catalog))
+                 )
                )),
     emit(HarnessId, RunId, 'run.started', none, none,
           _{task:Task}),
@@ -157,9 +166,12 @@ normalize_run_options(Options, Config) :-
     option(constraints(Constraints), Options, []),
     option(acceptance_criteria(AcceptanceCriteria), Options, []),
     option(completion_barrier(CompletionBarrier), Options, none),
+    option(skill_roots(SkillRoots0), Options, []),
+    maplist(skill_root_string, SkillRoots0, SkillRoots),
     maplist(must_be_ground,
             [Worker, Models, Repository, ArtifactRefs, FactRefs,
-             Evidence, Constraints, AcceptanceCriteria, CompletionBarrier]),
+             Evidence, Constraints, AcceptanceCriteria, CompletionBarrier,
+             SkillRoots]),
     Config = run_config{
                  worker:Worker,
                  models:Models,
@@ -175,7 +187,8 @@ normalize_run_options(Options, Config) :-
                  evidence:Evidence,
                  constraints:Constraints,
                  acceptance_criteria:AcceptanceCriteria,
-                 completion_barrier:CompletionBarrier
+                 completion_barrier:CompletionBarrier,
+                 skill_roots:SkillRoots
               }.
 
 validate_run_option(Option) :-
@@ -196,7 +209,8 @@ validate_run_option(Option) :-
                 evidence,
                 constraints,
                 acceptance_criteria,
-                completion_barrier
+                completion_barrier,
+                skill_roots
               ]),
     !.
 validate_run_option(Option) :-
@@ -214,10 +228,40 @@ validate_start_size(Task, Config) :-
                             'start request exceeds the bounded packet limit')))
     ).
 
+% Skills are loaded once per run, server-side, from the operator-configured
+% roots; the bounded catalog summary surfaces in status, and completion
+% workers receive the catalog through run_phase_async/5. The catalog never
+% enters the immutable per-phase packet, which stays under the packet bound.
+ensure_run_skill_catalog(Config, Catalog) :-
+    (   Config.skill_roots == []
+    ->  Catalog = none
+    ;   rlm_skill:skill_catalog_load(Config.skill_roots, [], Outcome),
+        (   Outcome = ok(Catalog)
+        ->  true
+        ;   throw(error(consortium_error(skill_catalog_load_failed),
+                        context(consortium_agent:start/4, Outcome)))
+        )
+    ).
+
+status_with_skills(Status, none, Status) :- !.
+status_with_skills(Status, Catalog, Skilled) :-
+    length(Catalog.skills, Count),
+    Skilled = Status.put(skill_summary,
+                         skill_summary{count:Count,
+                                       fingerprint:Catalog.fingerprint}).
+
+skill_root_string(Root0, Root) :-
+    (   atom(Root0)
+    ->  atom_string(Root0, Root)
+    ;   must_be(string, Root0),
+        Root = Root0
+    ).
+
 cleanup_failed_admission(HarnessId, RunId) :-
     retractall(active_attempt(HarnessId, RunId, _, _, _, _, _, _)),
     retractall(run_record(HarnessId, RunId, _)),
     retractall(run_config(HarnessId, RunId, _)),
+    retractall(run_skill_catalog(HarnessId, RunId, _)),
     retractall(run_event(HarnessId, RunId, _, _)),
     retractall(run_artifact(HarnessId, RunId, _, _)),
     retractall(run_output_ref(HarnessId, RunId, _)),
@@ -281,7 +325,11 @@ schedule_phase_locked(HarnessId, RunId, Phase) :-
                      Packet,
                      PacketId,
                      _),
-    run_phase_async(Packet, Config.worker, PhaseBudget, Future),
+    (   run_skill_catalog(HarnessId, RunId, Catalog)
+    ->  Skills = Catalog
+    ;   Skills = none
+    ),
+    run_phase_async(Packet, Config.worker, PhaseBudget, Skills, Future),
     rlm_future_then(
         Future,
         consortium_agent:phase_continuation(HarnessId,

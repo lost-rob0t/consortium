@@ -343,7 +343,7 @@ protocol_policy_options(Dict, Options) :-
             ( member(Key,
                      [budget, phase_budget, max_repairs, max_rage_cycles,
                       repository, artifact_refs, fact_refs, evidence,
-                      constraints, acceptance_criteria]),
+                      constraints, acceptance_criteria, skill_roots]),
               optional_option(Key, Dict, [Option])
             ),
             Options).

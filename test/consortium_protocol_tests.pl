@@ -177,6 +177,36 @@ test(zai_coding_plan_admits_then_fails_cleanly_without_credentials) :-
         ),
         stop_daemon(Input, Output, Error, Pid)).
 
+test(skill_roots_surface_in_daemon_status) :-
+    start_daemon(Input, Output, Error, Pid),
+    setup_call_cleanup(
+        true,
+        ( protocol_test_directory(TestDirectory),
+          directory_file_path(TestDirectory, 'fixtures/skills', Roots0),
+          absolute_file_name(Roots0, SkillRoot, [file_type(directory)]),
+          send_request(Input,
+                       _{id:1,
+                         method:"start",
+                         params:_{task:"daemon skill wiring",
+                                  options:_{worker:"fake",
+                                            skill_roots:[SkillRoot]}}}),
+          read_response(Output, 1, [], StartResponse, StartMessages),
+          assertion(StartResponse.ok == true),
+          RunId = StartResponse.result.run_id,
+          send_request(Input,
+                       _{id:2, method:"status", params:_{run_id:RunId}}),
+          read_response(Output, 2, StartMessages, StatusResponse, _),
+          assertion(StatusResponse.ok == true),
+          Skills = StatusResponse.result.skill_summary,
+          assertion(Skills.count == 1),
+          assertion(string(Skills.fingerprint)),
+          send_request(Input,
+                       _{id:3, method:"shutdown", params:_{}}),
+          read_response(Output, 3, [], Shutdown, _),
+          assertion(Shutdown.ok == true)
+        ),
+        stop_daemon(Input, Output, Error, Pid)).
+
 test(unsupported_provider_is_rejected_and_daemon_survives) :-
     start_daemon(Input, Output, Error, Pid),
     setup_call_cleanup(

@@ -435,6 +435,34 @@ test(cancel_racing_claimed_callback_cannot_complete_run,
           message_queue_destroy(Cancelled)
         )).
 
+:- prolog_load_context(directory, TestDirectory),
+   asserta(consortium_agent_test_directory(TestDirectory)).
+
+test(skill_roots_load_catalog_and_surface_summary,
+     [ setup(setup_harness(Harness, Queue)),
+       cleanup(cleanup_harness(Harness, Queue))
+     ]) :-
+    consortium_agent_test_directory(TestDirectory),
+    directory_file_path(TestDirectory, 'fixtures/skills', Roots0),
+    absolute_file_name(Roots0, SkillRoot, [file_type(directory)]),
+    success_options(Options0),
+    append(Options0, [skill_roots([SkillRoot])], Options),
+    start(Harness, "skill wiring", Options, RunId),
+    wait_terminal(Queue, Terminal),
+    assertion(Terminal.type == 'run.completed'),
+    status(Harness, RunId, Status),
+    Summary = Status.skill_summary,
+    assertion(Summary.count == 1),
+    assertion(skill_fingerprint_nonempty(Summary.fingerprint)).
+
+skill_fingerprint_nonempty(Fingerprint) :-
+    (   atom(Fingerprint)
+    ->  atom_length(Fingerprint, Length)
+    ;   string(Fingerprint),
+        string_length(Fingerprint, Length)
+    ),
+    Length >= 8.
+
 test(malformed_model_result_fails_without_stranding_runtime,
      [ setup(setup_harness(Harness, Queue)),
        cleanup(cleanup_harness(Harness, Queue))

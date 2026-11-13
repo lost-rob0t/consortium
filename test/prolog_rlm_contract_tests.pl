@@ -5,6 +5,7 @@
 :- use_module(library(rlm), []).
 :- use_module(library(rlm_chain), []).
 :- use_module(library(rlm_completion), []).
+:- use_module(library(rlm_skill), []).
 :- use_module(library(rlm_tool), []).
 
 required_predicate(Module, Name/Arity) :-
@@ -50,6 +51,30 @@ test(authority_resolution_contract) :-
               rlm_pending_approvals/2,
               rlm_pending_resolution_async/2
             ]).
+
+test(skill_catalog_contract) :-
+    maplist(required_predicate(rlm_skill),
+            [ rlm_skill_ready/0,
+              skill_catalog_load/3,
+              skill_catalog_merge/3,
+              skill_catalog_skills/2,
+              skill_catalog_skill/3,
+              skill_catalog_prompt_units/3,
+              skill_read_resource/3,
+              skill_default_catalog/1
+            ]).
+
+:- prolog_load_context(directory, TestDirectory),
+   asserta(rlm_contract_test_directory(TestDirectory)).
+
+test(skill_catalog_loads_bounded_packages) :-
+    rlm_contract_test_directory(TestDirectory),
+    directory_file_path(TestDirectory, 'fixtures/skills', Roots0),
+    absolute_file_name(Roots0, Roots, [file_type(directory)]),
+    rlm_skill:skill_catalog_load([Roots], [], ok(Catalog)),
+    rlm_skill:skill_catalog_skills(Catalog, Skills),
+    length(Skills, 1),
+    Catalog.fingerprint \== "".
 
 test(current_budget_has_cost_and_time_bounds) :-
     rlm_completion:default_completion_budget(Budget),

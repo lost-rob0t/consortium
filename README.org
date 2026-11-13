@@ -109,6 +109,19 @@ the operator defaults. See =schema/consortium-event.schema.json= for the
 event envelope and =test/consortium_protocol_tests.pl= for the wire
 contract.
 
+* Skills
+
+Completion workers accept Prolog-RLM skill catalogs. Runs admit a
+=skill_roots= option (list of directories holding bounded SKILL.md
+packages); the daemon loads the catalog once per run through the pinned
+runtime's confined loader, reports =skill_summary= (count + fingerprint)
+in =status=, and hands the catalog to completion workers for prompt-unit
+selection and resource-confined reads. The catalog never enters the
+immutable per-phase packet. Direct =rlm= provider workers do not consume
+skill catalogs; skills apply to =completion(...)= workers.
+Expert packs and the plan-graph expert registry follow the ZARA-EXPERT/1
+descriptor work and are deliberately not re-invented here.
+
 * Prolog-RLM runtime boundary
 
 Consortium deliberately depends on Prolog-RLM rather than reimplementing its

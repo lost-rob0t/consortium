@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T22:21:07Z",
-  "facts_sha256": "a44c52025de19ad12645ef78722a9901dc95987932d8b54ca73fc5344787a41e",
-  "head": "3c2c16ab3479577d46db0e1647637862a5cc2cd1",
+  "checked_at": "2026-11-13T22:36:23Z",
+  "facts_sha256": "138f39226e716fc8920e8189c16066ed149065b90178581ad8d525de38291ab4",
+  "head": "123875f7a24963708abdd687798e48b165f40874",
   "reason": "verification passed",
-  "run": "76ac41ecfe284897b84931b9627c4db2",
+  "run": "3b056e445f874c4bb430187813b9417c",
   "run_file": "evidence.pl",
-  "run_sha256": "641a59ddc42ce7376267d18fbfbc651c1c08a370ee86074e024d35dc1258d4d2",
+  "run_sha256": "7339e437bf17aa05292779161066c457a3a248ec0e21340c81cba5d958f45c21",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "kb-promotion-20261113",
+  "task": "consortium-handoff-20261113-1740",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "worktree_digest": "42c52afa67234d1bef154252276ea5f226f808fd09ca84d931267ba55067ec29"
 }

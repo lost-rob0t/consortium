@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T20:46:51Z",
-  "facts_sha256": "2332f71b29879972025f4bb53e07fa5d8b9c93082083be4f9c9a42799a2777de",
-  "head": "9be6620ca247955410b4a5ed143b9f7f56d93a0e",
+  "checked_at": "2026-11-13T20:54:29Z",
+  "facts_sha256": "229185b52888128e6a0cd7464841bbd48fc9daafc445071406b4568ce19aeaf8",
+  "head": "ac90e368a8a6cd8ba91b9d47b8287734ae49bcb1",
   "reason": "verification passed",
-  "run": "bcffd45f8b284edea9c06d50d877ff3b",
+  "run": "ce43a2c4a97b46c68fa4a6e99b3a70a2",
   "run_file": "evidence.pl",
-  "run_sha256": "4893a10b2a63d8cee7f9261b51415ab7a4d179a3145e16f3847b790fa7a2d6d9",
+  "run_sha256": "93d9a33b91382e3eaabc3d3de4037bd3f19e0c34312ef084e97b8beae67377a4",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "region-review",
+  "task": "consortium-handoff-20261113-pr31",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "worktree_digest": "0044cc3f844866a839dfa1b8913048944055fc8a4412727693fea01902c467f8"
 }

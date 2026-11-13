@@ -46,6 +46,28 @@ has_event_type(Events, Type) :-
     member(Event, Events),
     get_dict(type, Event, Type).
 
+% CI diagnosis aid: when a completion-barrier wait starves, dump the run's
+% status and full event list to stderr before failing, so the build log
+% shows which side of the race never happened.
+wait_for_with_diagnosis(Harness, RunId, Queue, Message, Label) :-
+    (   thread_get_message(Queue, Message, [timeout(30.0)])
+    ->  true
+    ;   format(user_error, '~N[barrier-diagnosis] ~w timed out after 30s~n',
+               [Label]),
+        ignore(catch(diagnose_run(Harness, RunId), Error,
+                     format(user_error,
+                            '~N[barrier-diagnosis] dump failed: ~w~n',
+                            [Error]))),
+        fail
+    ).
+
+diagnose_run(Harness, RunId) :-
+    status(Harness, RunId, Status),
+    format(user_error, '~N[barrier-diagnosis] status: ~w~n', [Status]),
+    events(Harness, RunId, 0, RunEvents),
+    forall(member(Event, RunEvents),
+           format(user_error, '~N[barrier-diagnosis] event: ~w~n', [Event])).
+
 capability_planner(_, ok(Output)) :-
     Plan = plan([final(literal("{\"phase\":\"analyze\",\"status\":\"completed\",\"content\":\"ok\"}"))]),
     Output = planner_output{
@@ -386,16 +408,22 @@ test(cancel_racing_claimed_callback_cannot_complete_run,
                                              CallbackRelease))
                 ],
                 RunId),
-          thread_get_message(CallbackStarted,
-                             callback_entered(analyze),
-                             [timeout(30.0)]),
+          wait_for_with_diagnosis(Harness,
+                                  RunId,
+                                  CallbackStarted,
+                                  callback_entered(analyze),
+                                  callback_entry),
           thread_create(( cancel(Harness, RunId, Outcome),
                           thread_send_message(Cancelled, Outcome) ),
                         CancelThread,
                         []),
           assertion(\+ thread_get_message(Cancelled, _, [timeout(0.05)])),
           thread_send_message(CallbackRelease, go),
-          thread_get_message(Cancelled, ok(cancelled), [timeout(30.0)]),
+          wait_for_with_diagnosis(Harness,
+                                  RunId,
+                                  Cancelled,
+                                  ok(cancelled),
+                                  cancel_completion),
           thread_join(CancelThread, true),
           status(Harness, RunId, Status),
           assertion(Status.state == cancelled),

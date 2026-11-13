@@ -1,7 +1,11 @@
 % Ground task/control facts. Evidence is isolated by task and run.
-task('ci-racing-cancel').
-verification_context('ci-racing-cancel', '39d5ac9c95194aa9aad6df5ec81d92d3').
-repo_state('fc7d9b616037a6f05fb83bf52e40388d75497d2f', 'b705294360c81d606787859fca7180e23be213d1923cee106ae36bec931b9789').
+task('u4-approval-resolve').
+verification_context('u4-approval-resolve', 'c6df9e404aa341c4b45f1541db135a95').
+repo_state('fc7d9b616037a6f05fb83bf52e40388d75497d2f', 'ba644f312dce6f78e17640edef5ae27d005b4a4f6d74aa6f3f780d7e371306a8').
 research_required(false).
-requirement('det-tests-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
-claim('det-tests-green', requirement('det-tests-green')).
+requirement('plunit-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
+claim('plunit-green', requirement('plunit-green')).
+requirement('ert-green', command(['nix', 'build', '.#checks.x86_64-linux.emacs-client-tests', '--no-link'])).
+claim('ert-green', requirement('ert-green')).
+requirement('flake-green', command(['nix', 'flake', 'check'])).
+claim('flake-green', requirement('flake-green')).

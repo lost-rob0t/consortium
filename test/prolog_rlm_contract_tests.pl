@@ -2,6 +2,7 @@
 
 :- use_module(library(rlm_artifact), []).
 :- use_module(library(rlm_async), []).
+:- use_module(library(rlm), []).
 :- use_module(library(rlm_chain), []).
 :- use_module(library(rlm_completion), []).
 :- use_module(library(rlm_tool), []).
@@ -40,6 +41,14 @@ test(authority_and_artifact_contract) :-
             [ artifact_store_open/2,
               artifact_put/7,
               artifact_get/3
+            ]).
+
+test(authority_resolution_contract) :-
+    maplist(required_predicate(rlm),
+            [ rlm_approve/2,
+              rlm_deny/3,
+              rlm_pending_approvals/2,
+              rlm_pending_resolution_async/2
             ]).
 
 test(current_budget_has_cost_and_time_bounds) :-

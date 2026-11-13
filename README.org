@@ -57,8 +57,8 @@ nix run . -- daemon --memory
 
 Protocol requests have ={id, method, params}= and responses carry the same
 =id=. The process also pushes ={kind:"event", event:{...}}= records. Supported
-methods are =start=, =status=, =events=, =artifact=, =cancel=, =subscribe=,
-=unsubscribe=, and =shutdown=.
+methods are =start=, =status=, =events=, =artifact=, =cancel=, =approve=,
+=deny=, =subscribe=, =unsubscribe=, and =shutdown=.
 
 For desktop observers, the daemon also projects a bounded, atomic status snapshot
 to =$XDG_STATE_HOME/consortium/qtile-status.json=. Set

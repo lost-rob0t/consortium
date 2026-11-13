@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T19:13:31Z",
-  "facts_sha256": "ab51ebe45996a91387717fade7f7ed9fadd78ea5bf269c6bd75d62106956fa60",
+  "checked_at": "2026-11-13T19:41:48Z",
+  "facts_sha256": "9fd106c956938d0c65a7433a025e0238daa7cc64fd3d9f99913c320765ca7e9f",
   "head": "fc7d9b616037a6f05fb83bf52e40388d75497d2f",
   "reason": "verification passed",
-  "run": "39d5ac9c95194aa9aad6df5ec81d92d3",
+  "run": "c6df9e404aa341c4b45f1541db135a95",
   "run_file": "evidence.pl",
-  "run_sha256": "ee125578890d6d1671085159f3ef22e9a00955af7ed6d9ffe43c2745aad6df9f",
+  "run_sha256": "48d0ffff96b456ae05a86b0e27fd39c0221d4217f48ce38d6515b4f8b573158d",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "ci-racing-cancel",
+  "task": "u4-approval-resolve",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "b705294360c81d606787859fca7180e23be213d1923cee106ae36bec931b9789"
+  "worktree_digest": "ba644f312dce6f78e17640edef5ae27d005b4a4f6d74aa6f3f780d7e371306a8"
 }

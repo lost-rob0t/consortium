@@ -117,12 +117,24 @@
 
 ;;; Default options ------------------------------------------------------
 
-(ert-deftest consortium-rlm-ui-default-run-options-shape ()
-  (let ((options consortium-rlm-ui-default-run-options))
-    (should (equal (cdr (assq 'worker options)) "rlm"))
-    (should (equal (cdr (assq 'provider options)) "openrouter"))
-    (should (assq 'models options))
-    (should (assq 'budget options))))
+(ert-deftest consortium-rlm-ui-start-task-uses-config-mapping ()
+  "start-task defaults to the canonical configuration mapping."
+  (let* ((session (consortium-rlm-session--make :name "t"))
+         (consortium-rlm-ui-session session)
+         captured)
+    (setf (consortium-rlm-session-connection session) 'fake)
+    (cl-letf (((symbol-function 'consortium-rlm-ui-connect)
+               (lambda () session))
+              ((symbol-function 'consortium-rlm-process-send)
+               (lambda (_conn line) (push line captured))))
+      (consortium-rlm-ui-start-task "demo task")
+      (let* ((frame (json-read-from-string (car captured)))
+             (options (cdr (assq 'options (cdr (assq 'params frame))))))
+        (should (equal (cdr (assq 'method frame)) "start"))
+        (should (equal (cdr (assq 'worker options)) "rlm"))
+        (should (equal (cdr (assq 'provider options)) "openrouter"))
+        (should (assq 'models options))
+        (should (assq 'budget options))))))
 
 (provide 'consortium-rlm-ui-tests)
 ;;; consortium-rlm-ui-tests.el ends here

@@ -29,61 +29,54 @@
 (require 'consortium-rlm-client)
 (require 'consortium-rlm-process)
 (require 'consortium-rlm-session)
+(require 'consortium-rlm-config)
+
+(define-obsolete-variable-alias 'consortium-rlm-ui-program
+  'consortium-rlm-config-daemon-program "2026-11-13")
+(define-obsolete-variable-alias
+  'consortium-rlm-ui-program-arguments
+  'consortium-rlm-config-daemon-arguments "2026-11-13")
 
 (defgroup consortium-rlm-ui nil
   "Consortium workbench prompt surfaces and daemon lifecycle."
   :group 'tools)
 
-(defcustom consortium-rlm-ui-program "consortium"
-  "Consortium daemon executable."
-  :type 'string)
-
-(defcustom consortium-rlm-ui-program-arguments '("daemon")
-  "Arguments used when starting the Consortium daemon."
-  :type '(repeat string))
-
-(defcustom consortium-rlm-ui-openrouter-auth-host "openrouter.ai"
-  "Auth-source host consulted for the OpenRouter secret when the
-OPENROUTER_API_KEY environment variable is not already set."
-  :type 'string)
-
 (defcustom consortium-rlm-ui-auto-prompt t
   "Prompt in the minibuffer when approvals or questions are required."
   :type 'boolean)
-
-(defcustom consortium-rlm-ui-default-run-options
-  '((worker . "rlm")
-    (provider . "openrouter")
-    (models . ((root_agent . "z-ai/glm-4.6")
-               (analyze . "z-ai/glm-4.6")
-               (design . "z-ai/glm-4.6")
-               (adversarial_review . "z-ai/glm-4.6")
-               (resolve . "z-ai/glm-4.6")
-               (develop . "z-ai/glm-4.6")
-               (verify . "z-ai/glm-4.6")))
-    (budget . ((max_total_tokens . 24000)
-               (max_cost_usd . 2.0)
-               (time_limit . 300.0)))
-    (phase_budget . ((max_total_tokens . 4000)
-                     (max_cost_usd . 0.5)
-                     (time_limit . 60.0))))
-  "Provider-neutral run options sent with started tasks."
-  :type 'sexp)
 
 (defvar consortium-rlm-ui-session nil
   "The shared workbench daemon session, or nil.")
 
 ;;; Daemon lifecycle -------------------------------------------------------
 
-(defun consortium-rlm-ui--auth-source-secret ()
-  "Return the auth-source secret for `consortium-rlm-ui-openrouter-auth-host'."
+(defun consortium-rlm-ui--auth-source-secret (host)
+  "Return the auth-source secret for HOST, or nil."
   (when (require 'auth-source nil t)
     (when-let* ((entry (car (auth-source-search
-                             :host consortium-rlm-ui-openrouter-auth-host
+                             :host host
                              :max 1
                              :require '(:secret))))
                 (secret (plist-get entry :secret)))
       (if (functionp secret) (funcall secret) secret))))
+
+(defun consortium-rlm-ui--credential-environment ()
+  "Augment `process-environment' with the active provider credential.
+The secret is resolved from auth-source only when the provider's
+credential environment variable is not already set; it never enters
+configuration or the wire protocol."
+  (let* ((spec (consortium-rlm-config-provider-spec
+                consortium-rlm-config-provider))
+         (credential-env (cdr (assq 'credential_env spec)))
+         (host (cdr (assq 'auth_host spec))))
+    (if (or (not credential-env)
+            (not host)
+            (getenv credential-env))
+        process-environment
+      (let ((secret (consortium-rlm-ui--auth-source-secret host)))
+        (if secret
+            (cons (concat credential-env "=" secret) process-environment)
+          process-environment)))))
 
 (defun consortium-rlm-ui-connect ()
   "Start or adopt the shared daemon session with prompt hooks attached.
@@ -94,14 +87,17 @@ secret itself never enters configuration or the wire protocol."
            (process-live-p (consortium-rlm-session-connection
                             consortium-rlm-ui-session)))
       consortium-rlm-ui-session
-    (let ((session (consortium-rlm-session-start
-                    "consortium-rlm-ui"
-                    consortium-rlm-ui-program
-                    consortium-rlm-ui-program-arguments
-                    (lambda (sess _process event)
-                      (message "Consortium daemon exited: %s" event)
-                      (when (eq sess consortium-rlm-ui-session)
-                        (setq consortium-rlm-ui-session nil))))))
+    (let ((session
+           (let ((process-environment
+                  (consortium-rlm-ui--credential-environment)))
+             (consortium-rlm-session-start
+              "consortium-rlm-ui"
+              consortium-rlm-config-daemon-program
+              consortium-rlm-config-daemon-arguments
+              (lambda (sess _process event)
+                (message "Consortium daemon exited: %s" event)
+                (when (eq sess consortium-rlm-ui-session)
+                  (setq consortium-rlm-ui-session nil)))))))
       (setf (consortium-rlm-session-event-hook session)
             #'consortium-rlm-ui--handle-event)
       (setq consortium-rlm-ui-session session)
@@ -115,7 +111,8 @@ secret itself never enters configuration or the wire protocol."
 
 (defun consortium-rlm-ui-start-task (task &optional options callback)
   "Start TASK with OPTIONS on the shared session.
-OPTIONS default to `consortium-rlm-ui-default-run-options'.  CALLBACK,
+OPTIONS default to the canonical configuration mapping
+\(`consortium-rlm-config-run-options'\).  CALLBACK,
 when given, receives (ok result).  Return the request id."
   (interactive "sConsortium task: ")
   (let ((session (consortium-rlm-ui-connect)))
@@ -123,7 +120,7 @@ when given, receives (ok result).  Return the request id."
      session
      "start"
      `((task . ,task)
-       (options . ,(or options consortium-rlm-ui-default-run-options)))
+       (options . ,(or options (consortium-rlm-config-run-options))))
      callback)))
 
 ;;; Prompt surfaces --------------------------------------------------------

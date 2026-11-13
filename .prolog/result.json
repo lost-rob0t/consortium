@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T22:36:23Z",
-  "facts_sha256": "138f39226e716fc8920e8189c16066ed149065b90178581ad8d525de38291ab4",
-  "head": "123875f7a24963708abdd687798e48b165f40874",
+  "checked_at": "2026-11-13T23:43:29Z",
+  "facts_sha256": "7be5f50750bfc85307723087371be07598e035fffbe660d19c7f3f9de6cfd8f7",
+  "head": "e32310da179c1ac43b3c58a04100f91e2b096f35",
   "reason": "verification passed",
-  "run": "3b056e445f874c4bb430187813b9417c",
+  "run": "45bbc90dc60b4a7aa3adf13dcc7d5f8c",
   "run_file": "evidence.pl",
-  "run_sha256": "7339e437bf17aa05292779161066c457a3a248ec0e21340c81cba5d958f45c21",
+  "run_sha256": "eba41a5dbfe281677ac4eec778374dc647550d03245e78c1b19fce1b71c57c39",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "consortium-handoff-20261113-1740",
+  "task": "elisp-config-dsl-tools",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "42c52afa67234d1bef154252276ea5f226f808fd09ca84d931267ba55067ec29"
+  "worktree_digest": "6f0ede80f18293232611922698cee3811620a38b30f21df223c1aea82dfeab0f"
 }

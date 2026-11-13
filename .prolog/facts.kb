@@ -1,11 +1,15 @@
 % Ground task/control facts. Evidence is isolated by task and run.
-task('consortium-handoff-20261113-1740').
-verification_context('consortium-handoff-20261113-1740', '3b056e445f874c4bb430187813b9417c').
-repo_state('123875f7a24963708abdd687798e48b165f40874', '42c52afa67234d1bef154252276ea5f226f808fd09ca84d931267ba55067ec29').
+task('elisp-config-dsl-tools').
+verification_context('elisp-config-dsl-tools', '45bbc90dc60b4a7aa3adf13dcc7d5f8c').
+repo_state('e32310da179c1ac43b3c58a04100f91e2b096f35', '6f0ede80f18293232611922698cee3811620a38b30f21df223c1aea82dfeab0f').
 research_required(false).
-requirement('plunit-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
-claim('plunit-green', requirement('plunit-green')).
-requirement('ert-green', command(['nix', 'build', '.#checks.x86_64-linux.emacs-client-tests', '--no-link'])).
-claim('ert-green', requirement('ert-green')).
-requirement('flake-green', command(['nix', 'flake', 'check'])).
-claim('flake-green', requirement('flake-green')).
+requirement('plunit-suite', command(['nix', 'develop', '-c', 'swipl', '-q', '-s', 'test/run_tests.pl'])).
+claim('plunit-suite', requirement('plunit-suite')).
+requirement('ert-suite', command(['emacs', '-Q', '--batch', '-L', 'emacs', '-l', 'test/consortium_emacs_tests.el', '-f', 'ert-run-tests-batch-and-exit'])).
+claim('ert-suite', requirement('ert-suite')).
+requirement('validate-contracts', command(['nix', 'develop', '-c', 'python', 'test/validate_contracts.py'])).
+claim('validate-contracts', requirement('validate-contracts')).
+requirement('flake-check', command(['nix', 'flake', 'check', '--show-trace'])).
+claim('flake-check', requirement('flake-check')).
+requirement('byte-compile-clean', command(['/tmp/opencode/elisp7/compile.sh'])).
+claim('byte-compile-clean', requirement('byte-compile-clean')).

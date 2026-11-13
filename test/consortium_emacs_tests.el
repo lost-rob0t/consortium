@@ -17,6 +17,9 @@
 (let ((test-dir (file-name-directory load-file-name)))
   (load (expand-file-name "consortium-rlm-tests.el" test-dir))
   (load (expand-file-name "consortium-rlm-session-tests.el" test-dir))
+  (load (expand-file-name "consortium-rlm-config-tests.el" test-dir))
+  (load (expand-file-name "consortium-rlm-dsl-tests.el" test-dir))
+  (load (expand-file-name "consortium-rlm-tools-tests.el" test-dir))
   (load (expand-file-name "consortium-rlm-ui-tests.el" test-dir))
   (load (expand-file-name "consortium-rlm-review-tests.el" test-dir)))
 

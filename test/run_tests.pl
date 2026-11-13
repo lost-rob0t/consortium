@@ -11,6 +11,7 @@ main(_) :-
                 consortium_test('adard_state_tests.pl'),
                 consortium_test('consortium_agent_tests.pl'),
                 consortium_test('consortium_protocol_tests.pl'),
+                consortium_test('consortium_dsl_tests.pl'),
                 consortium_test('consortium_desktop_status_tests.pl')],
                [if(changed)]),
     (   run_tests

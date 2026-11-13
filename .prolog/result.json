@@ -1,14 +1,16 @@
 {
-  "checked_at": "2026-09-20T23:53:07Z",
-  "facts_sha256": "73e9815e677211902b7e67fc40b17d98e600d792e1d06c4420952ee114b7d589",
-  "head": "6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb",
+  "checked_at": "2026-11-13T19:13:31Z",
+  "facts_sha256": "ab51ebe45996a91387717fade7f7ed9fadd78ea5bf269c6bd75d62106956fa60",
+  "head": "fc7d9b616037a6f05fb83bf52e40388d75497d2f",
   "reason": "verification passed",
-  "run_file": "run-6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb.pl",
-  "run_sha256": "8f317600915a8017e003723c1b2c0e4e0ec7611f2a36e821a7063f33c088b022",
+  "run": "39d5ac9c95194aa9aad6df5ec81d92d3",
+  "run_file": "evidence.pl",
+  "run_sha256": "ee125578890d6d1671085159f3ef22e9a00955af7ed6d9ffe43c2745aad6df9f",
   "status": "pass",
-  "stderr_sha256": "7f317feceb76943ad93279f4596562a2383a211980129c2850da34792799baa4",
+  "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "verify_sha256": "452c480229527acfed72d69f4884f3e26b233211af846d42754f2a8f7e8eca99",
-  "worktree_digest": "b2909e8a863ce61a19306b63a10752dfe35585478c88ab22554a57d00fe90fe8"
+  "task": "ci-racing-cancel",
+  "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
+  "worktree_digest": "b705294360c81d606787859fca7180e23be213d1923cee106ae36bec931b9789"
 }

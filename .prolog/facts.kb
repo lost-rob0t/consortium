@@ -1,4 +1,7 @@
-% Ground task/control facts for this worktree. Machine observations live in runs/run-<HEAD>.pl.
-task('consortium-emacs-ide').
-repo_state('6dfb05ea61575f26de9d66e2aaf881bd7eda1aeb', 'b2909e8a863ce61a19306b63a10752dfe35585478c88ab22554a57d00fe90fe8').
+% Ground task/control facts. Evidence is isolated by task and run.
+task('ci-racing-cancel').
+verification_context('ci-racing-cancel', '39d5ac9c95194aa9aad6df5ec81d92d3').
+repo_state('fc7d9b616037a6f05fb83bf52e40388d75497d2f', 'b705294360c81d606787859fca7180e23be213d1923cee106ae36bec931b9789').
 research_required(false).
+requirement('det-tests-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
+claim('det-tests-green', requirement('det-tests-green')).

@@ -1,11 +1,13 @@
 % Ground task/control facts. Evidence is isolated by task and run.
-task('providers-zai-codex').
-verification_context('providers-zai-codex', 'a7f5fd0ae4b0408ebe1727f24aee4ed7').
-repo_state('a758f2418237d9e8c1184c72265323cde7b1e5e1', 'c518a8d21260ce5ac97db24923b8b2834a7a16c42ec17750540d06d70bc12e4a').
+task('zai-coding-plan').
+verification_context('zai-coding-plan', '5bb19e6459ec4481be6bf0854be86e08').
+repo_state('7808156493b7a21cef149b99174a0fe6e52be961', '26b34360c637aad034337946430c6d3839ce34f973d96e0cd3427ce990f67a22').
 research_required(false).
 requirement('plunit-green', command(['nix', 'build', '.#checks.x86_64-linux.deterministic-tests', '--no-link'])).
 claim('plunit-green', requirement('plunit-green')).
 requirement('ert-green', command(['nix', 'build', '.#checks.x86_64-linux.emacs-client-tests', '--no-link'])).
 claim('ert-green', requirement('ert-green')).
+requirement('contracts-green', command(['nix', 'build', '.#checks.x86_64-linux.contract-validation', '--no-link'])).
+claim('contracts-green', requirement('contracts-green')).
 requirement('flake-green', command(['nix', 'flake', 'check'])).
 claim('flake-green', requirement('flake-green')).

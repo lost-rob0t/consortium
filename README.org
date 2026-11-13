@@ -98,6 +98,11 @@ request time, never from configuration or the wire:
   (default =OPENAI_API_KEY=), and a full seven-role =models= object.
   Missing credentials fail the run cleanly before any network egress;
   unsupported providers are rejected at admission.
+- *z.ai GLM Coding Plan*: per-run options =provider= = =zai= with
+  =credential_env= = =ZAI_API_KEY= and GLM model ids (=glm-5.3= default).
+  Defaults target the dedicated coding-plan endpoint
+  (=/api/coding/paas/v4=) because plan quota only flows through it — the
+  general =/api/paas/v4= endpoint bills account balance instead.
 
 Role routes and budgets remain run options; =consortium.toml= documents
 the operator defaults. See =schema/consortium-event.schema.json= for the

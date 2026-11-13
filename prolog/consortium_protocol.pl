@@ -235,9 +235,11 @@ protocol_execution_options(Dict, Options) :-
     ->  protocol_openrouter_options(Dict, Options)
     ;   Provider == "codex"
     ->  protocol_codex_options(Dict, Options)
+    ;   Provider == "zai"
+    ->  protocol_zai_options(Dict, Options)
     ;   throw(error(consortium_error(unsupported_provider(Provider)),
                     context(consortium_protocol,
-                            'supported rlm providers: openrouter, codex')))
+                            'supported rlm providers: openrouter, codex, zai')))
     ).
 protocol_execution_options(Dict, [worker(Worker)]) :-
     protocol_worker(Dict, Worker).
@@ -265,7 +267,28 @@ protocol_codex_options(Dict, Options) :-
     ->  CredentialEnv = CredentialEnv0
     ;   CredentialEnv = "OPENAI_API_KEY"
     ),
-    codex_model_routes(ModelDict, Endpoint, CredentialEnv, Models),
+    openai_compatible_model_routes(ModelDict, Endpoint, CredentialEnv, Models),
+    Options = [ worker(rlm),
+                models(Models),
+                capabilities([model(openai_compatible)]),
+                phase_capabilities([model(openai_compatible)])
+              ].
+
+% z.ai GLM Coding Plan (OpenAI chat-completions compatible). Defaults
+% target the dedicated coding-plan endpoint — plan quota only flows
+% through it; the general /api/paas/v4 endpoint bills account balance.
+% The plan key travels as ZAI_API_KEY in the daemon environment.
+protocol_zai_options(Dict, Options) :-
+    require_models(Dict, ModelDict),
+    (   get_dict(endpoint, Dict, Endpoint0), string(Endpoint0)
+    ->  Endpoint = Endpoint0
+    ;   Endpoint = "https://api.z.ai/api/coding/paas/v4/chat/completions"
+    ),
+    (   get_dict(credential_env, Dict, CredentialEnv0), string(CredentialEnv0)
+    ->  CredentialEnv = CredentialEnv0
+    ;   CredentialEnv = "ZAI_API_KEY"
+    ),
+    openai_compatible_model_routes(ModelDict, Endpoint, CredentialEnv, Models),
     Options = [ worker(rlm),
                 models(Models),
                 capabilities([model(openai_compatible)]),
@@ -293,9 +316,9 @@ protocol_roles_present(ModelDict) :-
                                    'each phase role needs a model string')))
            )).
 
-codex_model_routes(ModelDict, Endpoint, CredentialEnv, Models) :-
+openai_compatible_model_routes(ModelDict, Endpoint, CredentialEnv, Models) :-
     is_dict(ModelDict),
-    maplist(codex_role_route(ModelDict, Endpoint, CredentialEnv),
+    maplist(openai_compatible_role_route(ModelDict, Endpoint, CredentialEnv),
             [root_agent, analyze, design, adversarial_review,
              resolve, develop, verify],
             Routes),
@@ -308,7 +331,7 @@ codex_model_routes(ModelDict, Endpoint, CredentialEnv, Models) :-
                     develop:Develop,
                     verify:Verify}.
 
-codex_role_route(ModelDict, Endpoint, CredentialEnv, Role, Route) :-
+openai_compatible_role_route(ModelDict, Endpoint, CredentialEnv, Role, Route) :-
     get_dict(Role, ModelDict, Model),
     openai_compatible_provider(Endpoint, env(CredentialEnv), Model, Provider),
     Route = model_route{provider:Provider,

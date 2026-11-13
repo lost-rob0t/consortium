@@ -1,16 +1,16 @@
 {
-  "checked_at": "2026-11-13T19:55:05Z",
-  "facts_sha256": "5c6a7b92d9751ecd07901111278985dfc900b6d8b062b600f7d139701cd2ab91",
-  "head": "a758f2418237d9e8c1184c72265323cde7b1e5e1",
+  "checked_at": "2026-11-13T20:00:24Z",
+  "facts_sha256": "3ade649a902bbd3cc18d238818e39c536723466ac0059f5c2dced9f512be1a21",
+  "head": "7808156493b7a21cef149b99174a0fe6e52be961",
   "reason": "verification passed",
-  "run": "a7f5fd0ae4b0408ebe1727f24aee4ed7",
+  "run": "5bb19e6459ec4481be6bf0854be86e08",
   "run_file": "evidence.pl",
-  "run_sha256": "016fd0eb7296a98c72db31856bfad6cce174c69431765e143294a63de058af8f",
+  "run_sha256": "99629bfa3a16018c419d5d1db40a830d04ca0a30f62bf98b5adb1d99ed1e918b",
   "status": "pass",
   "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
   "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "swipl_exit": 0,
-  "task": "providers-zai-codex",
+  "task": "zai-coding-plan",
   "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "c518a8d21260ce5ac97db24923b8b2834a7a16c42ec17750540d06d70bc12e4a"
+  "worktree_digest": "26b34360c637aad034337946430c6d3839ce34f973d96e0cd3427ce990f67a22"
 }

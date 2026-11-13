@@ -30,13 +30,36 @@ auto_escalate_local_failures = false
 
 [models]
 provider = "openrouter"
-root-agent = "openai/gpt-oss-120b"
-analyze = "openai/gpt-oss-120b"
-design = "openai/gpt-oss-120b"
-adversarial_review = "openai/gpt-oss-120b"
-resolve = "openai/gpt-oss-120b"
-develop = "openai/gpt-oss-120b"
-verify = "openai/gpt-oss-120b"
+# z.ai via OpenRouter. OPENROUTER_API_KEY must be present in the daemon
+# environment (the emacs layer injects it from auth-source when unset).
+root-agent = "z-ai/glm-4.6"
+analyze = "z-ai/glm-4.6"
+design = "z-ai/glm-4.6"
+adversarial_review = "z-ai/glm-4.6"
+resolve = "z-ai/glm-4.6"
+develop = "z-ai/glm-4.6"
+verify = "z-ai/glm-4.6"
+
+# Codex through any OpenAI-compatible endpoint. The credential is the NAME
+# of an environment variable ("OPENAI_API_KEY" by default); the daemon
+# resolves it at request time and secrets never travel over the protocol.
+# Per-run wire options:
+#   options.worker = "rlm"
+#   options.provider = "codex"
+#   options.endpoint = "https://api.openai.com/v1/chat/completions"
+#   options.credential_env = "OPENAI_API_KEY"
+#   options.models.<role> = "gpt-5-codex"
+[models.codex]
+provider = "codex"
+endpoint = "https://api.openai.com/v1/chat/completions"
+credential-env = "OPENAI_API_KEY"
+root-agent = "gpt-5-codex"
+analyze = "gpt-5-codex"
+design = "gpt-5-codex"
+adversarial_review = "gpt-5-codex"
+resolve = "gpt-5-codex"
+develop = "gpt-5-codex"
+verify = "gpt-5-codex"
 
 [events]
 schema = "consortium.event.v1"

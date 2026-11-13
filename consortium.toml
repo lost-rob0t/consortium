@@ -61,6 +61,25 @@ resolve = "gpt-5-codex"
 develop = "gpt-5-codex"
 verify = "gpt-5-codex"
 
+# z.ai GLM Coding Plan: the dedicated coding endpoint is the ONLY one that
+# spends plan quota — the general /api/paas/v4 endpoint bills balance
+# instead. The plan key travels as ZAI_API_KEY in the daemon environment.
+#   options.provider = "zai"
+#   options.endpoint = "https://api.z.ai/api/coding/paas/v4/chat/completions"
+#   options.credential_env = "ZAI_API_KEY"
+#   options.models.<role> = "glm-5.3"
+[models.zai]
+provider = "zai"
+endpoint = "https://api.z.ai/api/coding/paas/v4/chat/completions"
+credential-env = "ZAI_API_KEY"
+root-agent = "glm-5.3"
+analyze = "glm-5.3"
+design = "glm-5.3"
+adversarial_review = "glm-5.3"
+resolve = "glm-5.3"
+develop = "glm-5.3"
+verify = "glm-5.3"
+
 [events]
 schema = "consortium.event.v1"
 push = true

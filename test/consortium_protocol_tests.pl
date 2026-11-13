@@ -148,6 +148,35 @@ test(codex_provider_admits_then_fails_cleanly_without_credentials) :-
         ),
         stop_daemon(Input, Output, Error, Pid)).
 
+test(zai_coding_plan_admits_then_fails_cleanly_without_credentials) :-
+    start_daemon(Input, Output, Error, Pid),
+    setup_call_cleanup(
+        true,
+        ( send_request(Input,
+                       _{id:1,
+                         method:"start",
+                         params:_{task:"zai coding plan wiring",
+                                  options:_{worker:"rlm",
+                                            provider:"zai",
+                                            credential_env:"CONSORTIUM_TEST_MISSING_SECRET",
+                                            models:_{root_agent:"glm-5.3",
+                                                     analyze:"glm-5.3",
+                                                     design:"glm-5.3",
+                                                     adversarial_review:"glm-5.3",
+                                                     resolve:"glm-5.3",
+                                                     develop:"glm-5.3",
+                                                     verify:"glm-5.3"}}}}),
+          read_response(Output, 1, [], StartResponse, StartMessages),
+          assertion(StartResponse.ok == true),
+          RunId = StartResponse.result.run_id,
+          assertion(string(RunId)),
+          protocol_wait_terminal(Input, Output, 2, RunId, "failed", _),
+          send_request(Input, _{id:9, method:"shutdown", params:_{}}),
+          read_response(Output, 9, StartMessages, Shutdown, _),
+          assertion(Shutdown.ok == true)
+        ),
+        stop_daemon(Input, Output, Error, Pid)).
+
 test(unsupported_provider_is_rejected_and_daemon_survives) :-
     start_daemon(Input, Output, Error, Pid),
     setup_call_cleanup(

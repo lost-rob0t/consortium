@@ -6,7 +6,9 @@
             cancel/3,
             events/4,
             artifact/4,
-            phase_completed/5
+            phase_completed/5,
+            approve/4,
+            deny/5
           ]).
 
 :- use_module(library(error)).
@@ -17,6 +19,7 @@
 :- use_module(library(uuid)).
 :- use_module(library(rlm_artifact)).
 :- use_module(library(rlm_async)).
+:- use_module(library(rlm), [rlm_approve/2, rlm_deny/3]).
 :- use_module(library(rlm_tool), [capabilities_narrow/3]).
 :- use_module(consortium_adard).
 :- use_module(consortium_models).
@@ -736,15 +739,20 @@ fail_run(HarnessId, RunId, Phase, Error) :-
     emit(HarnessId, RunId, 'run.failed', Phase, none,
          _{state:failed, error:Error}).
 
-status(Harness, RunId, Status) :-
-    harness_id(Harness, HarnessId),
+require_run(HarnessId, RunId, Context) :-
     with_mutex(consortium_state,
-               ( run_record(HarnessId, RunId, Found)
-               -> Status = Found
+               ( run_record(HarnessId, RunId, _)
+               -> true
                ;  throw(error(existence_error(consortium_run, RunId),
-                              context(consortium_agent:status/3,
+                              context(Context,
                                       'run does not exist')))
                )).
+
+status(Harness, RunId, Status) :-
+    harness_id(Harness, HarnessId),
+    require_run(HarnessId, RunId, consortium_agent:status/3),
+    with_mutex(consortium_state,
+               run_record(HarnessId, RunId, Status)).
 
 cancel(Harness, RunId, Outcome) :-
     harness_id(Harness, HarnessId),
@@ -814,20 +822,31 @@ apply_cancel(HarnessId, RunId, cancel, Future, Continuation, Phase, AttemptId,
     emit(HarnessId, RunId, 'run.cancelled', Phase, AttemptId,
          _{generation:Generation}).
 
+% Human approval resolution. Prolog-RLM owns the pending-approval authority
+% machinery (deferred pending-operation futures, resolution gates); Consortium
+% validates the run surface and forwards the trusted-host decision to the
+% pinned runtime's public approve/deny APIs. The outcome of a resolution feeds
+% the waiting phase worker through the runtime's own continuation path.
+approve(Harness, RunId, ApprovalId, Outcome) :-
+    harness_id(Harness, HarnessId),
+    require_run(HarnessId, RunId, consortium_agent:approve/4),
+    rlm_approve(ApprovalId, Outcome).
+
+deny(Harness, RunId, ApprovalId, Reason, Outcome) :-
+    harness_id(Harness, HarnessId),
+    require_run(HarnessId, RunId, consortium_agent:deny/5),
+    rlm_deny(ApprovalId, Reason, Outcome).
+
 events(Harness, RunId, Since, Events) :-
     harness_id(Harness, HarnessId),
     must_be(nonneg, Since),
+    require_run(HarnessId, RunId, consortium_agent:events/4),
     with_mutex(consortium_state,
-               ( run_record(HarnessId, RunId, _)
-               -> findall(Sequence-Event,
-                          ( run_event(HarnessId, RunId, Sequence, Event),
-                            Sequence > Since
-                          ),
-                          Pairs)
-               ;  throw(error(existence_error(consortium_run, RunId),
-                              context(consortium_agent:events/4,
-                                      'run does not exist')))
-               )),
+               findall(Sequence-Event,
+                       ( run_event(HarnessId, RunId, Sequence, Event),
+                         Sequence > Since
+                       ),
+                       Pairs)),
     keysort(Pairs, Sorted),
     pairs_values(Sorted, Events).
 

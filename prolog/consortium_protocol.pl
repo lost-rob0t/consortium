@@ -28,7 +28,7 @@ main(Args) :-
 
 print_help :-
     format('Usage: consortium [daemon] [--memory | --state-dir DIR]~n'),
-    format('Persistent JSON Lines methods: start, status, events, artifact, cancel, subscribe, unsubscribe, shutdown.~n').
+    format('Persistent JSON Lines methods: start, status, events, artifact, cancel, approve, deny, subscribe, unsubscribe, shutdown.~n').
 
 daemon(Args) :-
     store_from_args(Args, Store),
@@ -172,6 +172,18 @@ dispatch_method("cancel", Harness, Params, Result, true) :-
     run_atom(Params.run_id, RunId),
     cancel(Harness, RunId, Outcome),
     cancellation_json(Outcome, Result).
+dispatch_method("approve", Harness, Params, Result, true) :-
+    run_atom(Params.run_id, RunId),
+    run_atom(Params.approval_id, ApprovalId),
+    approve(Harness, RunId, ApprovalId, Outcome),
+    approval_outcome_json(Outcome, Result).
+dispatch_method("deny", Harness, Params, Result, true) :-
+    run_atom(Params.run_id, RunId),
+    run_atom(Params.approval_id, ApprovalId),
+    ( get_dict(reason, Params, ReasonString) -> true ; ReasonString = "" ),
+    run_atom(ReasonString, Reason),
+    deny(Harness, RunId, ApprovalId, Reason, Outcome),
+    approval_outcome_json(Outcome, Result).
 dispatch_method("subscribe", _, _, _{subscribed:true}, true) :-
     retractall(protocol_subscribed(_)),
     asserta(protocol_subscribed(true)).
@@ -269,6 +281,22 @@ optional_option(_, _, []).
 
 cancellation_json(ok(cancelled), _{status:"cancelled"}).
 cancellation_json(ok(already_terminal), _{status:"already_terminal"}).
+
+approval_outcome_json(ok(approval_transition{id:Id, state:State}),
+                      _{status:Status, approval_id:IdString}) :-
+    !,
+    atom_string(State, Status),
+    (   atom(Id)
+    ->  atom_string(Id, IdString)
+    ;   IdString = Id
+    ).
+approval_outcome_json(ok(Outcome), _{status:"approved", detail:Detail}) :-
+    !,
+    term_string(Outcome, Detail, [quoted(true)]).
+approval_outcome_json(error(Error), _) :-
+    message_to_string(error(Error), Message),
+    throw(error(consortium_error(approval_unresolved),
+                context(consortium_protocol, Message))).
 
 run_atom(String, Atom) :-
     ( string(String) -> atom_string(Atom, String) ; Atom = String ).

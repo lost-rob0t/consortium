@@ -119,6 +119,47 @@ test(valid_json_with_invalid_params_returns_error_and_stays_alive) :-
         ),
         stop_daemon(Input, Output, Error, Pid)).
 
+test(approval_methods_reject_unknown_ids_and_stay_alive) :-
+    start_daemon(Input, Output, Error, Pid),
+    setup_call_cleanup(
+        true,
+        ( send_request(Input,
+                       _{id:1,
+                         method:"start",
+                         params:_{task:"approval surface",
+                                  options:_{worker:"fake"}}}),
+          read_response(Output, 1, [], StartResponse, StartMessages),
+          assertion(StartResponse.ok == true),
+          RunId = StartResponse.result.run_id,
+          send_request(Input,
+                       _{id:2,
+                         method:"approve",
+                         params:_{run_id:RunId,
+                                  approval_id:"approval_does_not_exist"}}),
+          read_response(Output, 2, StartMessages, ApproveResponse, Seen2),
+          assertion(ApproveResponse.ok == false),
+          send_request(Input,
+                       _{id:3,
+                         method:"deny",
+                         params:_{run_id:RunId,
+                                  approval_id:"approval_does_not_exist",
+                                  reason:"test denial"}}),
+          read_response(Output, 3, Seen2, DenyResponse, Seen3),
+          assertion(DenyResponse.ok == false),
+          send_request(Input,
+                       _{id:4,
+                         method:"approve",
+                         params:_{run_id:"run_does_not_exist",
+                                  approval_id:"approval_also_missing"}}),
+          read_response(Output, 4, Seen3, MissingRun, _),
+          assertion(MissingRun.ok == false),
+          send_request(Input,
+                       _{id:5, method:"shutdown", params:_{}}),
+          read_response(Output, 5, [], Shutdown, _),
+          assertion(Shutdown.ok == true)
+        ),
+        stop_daemon(Input, Output, Error, Pid)).
+
 test(openrouter_role_routes_are_available_without_hardcoded_test_provider) :-
     Models = json{root_agent:"openai/gpt-oss-120b",
                   analyze:"openai/gpt-oss-120b",

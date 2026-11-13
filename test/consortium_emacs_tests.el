@@ -17,7 +17,8 @@
 (let ((test-dir (file-name-directory load-file-name)))
   (load (expand-file-name "consortium-rlm-tests.el" test-dir))
   (load (expand-file-name "consortium-rlm-session-tests.el" test-dir))
-  (load (expand-file-name "consortium-rlm-ui-tests.el" test-dir)))
+  (load (expand-file-name "consortium-rlm-ui-tests.el" test-dir))
+  (load (expand-file-name "consortium-rlm-review-tests.el" test-dir)))
 
 (provide 'consortium_emacs_tests)
 ;;; consortium_emacs_tests.el ends here

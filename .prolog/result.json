@@ -1,16 +1,6 @@
 {
-  "checked_at": "2026-11-13T20:17:51Z",
-  "facts_sha256": "03cfe316054adf39b14f7fe24ed31c1e3ac0b148ac233a13b0565032475e4194",
-  "head": "557b8f5512bf7787afdd9582195ae048848016e4",
-  "reason": "verification passed",
-  "run": "f9cf00e4bd6644c7a6537021c6dc2876",
-  "run_file": "evidence.pl",
-  "run_sha256": "eca310555614bed7093e7a0ab0afc4ee579b93b8e0b1a048f4c79f9fcf5ba08b",
-  "status": "pass",
-  "stderr_sha256": "3f58487f8b178faab8411ba0285a21d4387b34d17785b054fc75e9ddaa05d772",
-  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "swipl_exit": 0,
-  "task": "consortium-handoff-20261113",
-  "verify_sha256": "e78b5e80fcf0af76206366221d8471683f219d05c79fb6ae161b4e5f4d1414ab",
-  "worktree_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "reason": "requirements changed; check required",
+  "run": "fbfef26cb10147b1aa0be0746b6fe451",
+  "status": "unknown",
+  "task": "region-review"
 }

@@ -109,6 +109,9 @@ the process and an event string."
            :command (cons program arguments)
            :connection-type 'pipe
            :coding 'utf-8-unix
+           ;; Keep daemon stderr (e.g. SWI pack-load warnings) out of
+           ;; the NDJSON stdout pipe: merged streams break line framing.
+           :stderr (get-buffer-create (format " *%s stderr*" name))
            :noquery t
            :filter (lambda (_process chunk)
                      (consortium-rlm-process--filter conn chunk))

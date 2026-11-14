@@ -155,8 +155,17 @@ Return nil for frames that are not daemon event envelopes."
         (session_id . ,(cdr (assq 'run_id event)))
         (seq . ,(cdr (assq 'sequence event)))
         (event_id . ,(cdr (assq 'event_id event)))
-        (event_type . ,(cdr (assq 'type event)))
+        (event_type . ,(consortium-rlm-session--canonical-event-type
+                        (cdr (assq 'type event))))
         (payload . ,(cdr (assq 'payload event)))))))
+
+(defun consortium-rlm-session--canonical-event-type (type)
+  "Normalize daemon event TYPE to the canonical client vocabulary.
+Daemon envelopes carry dotted names (run.started); the canonical
+prolog_agent_ui_v1 client vocabulary is underscored (run_started)."
+  (if (stringp type)
+      (replace-regexp-in-string "\\." "_" type)
+    type))
 
 (defun consortium-rlm-session--install-view (session run-id view)
   "Install VIEW for RUN-ID in SESSION, bounding retained views."
